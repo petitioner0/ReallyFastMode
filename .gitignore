@@ -1,3 +1,7 @@
 # Project exclude paths
 /target/
 /.idea/
+.DS_Store
+
+/reference/
+AGENT.md
