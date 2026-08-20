@@ -4,6 +4,7 @@ import basemod.BaseMod;
 import basemod.interfaces.PostInitializeSubscriber;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 import reallyfastmode.config.FastModeConfig;
+import reallyfastmode.patches.vfx.AdvancedCombatEffectPatches;
 import reallyfastmode.ui.FastModeSettingsPanel;
 
 
@@ -19,6 +20,7 @@ public final class ReallyFastMode implements PostInitializeSubscriber {
 
     @Override
     public void receivePostInitialize() {
+        AdvancedCombatEffectPatches.installFilteringLists();
         FastModeSettingsPanel.register();
     }
 }

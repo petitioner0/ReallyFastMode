@@ -17,6 +17,10 @@ import com.megacrit.cardcrawl.actions.common.FastDrawCardAction;
 import com.megacrit.cardcrawl.actions.common.GainBlockAction;
 import com.megacrit.cardcrawl.actions.common.HealAction;
 import com.megacrit.cardcrawl.actions.common.LoseHPAction;
+import com.megacrit.cardcrawl.actions.common.MakeTempCardAtBottomOfDeckAction;
+import com.megacrit.cardcrawl.actions.common.MakeTempCardInDiscardAction;
+import com.megacrit.cardcrawl.actions.common.MakeTempCardInDiscardAndDeckAction;
+import com.megacrit.cardcrawl.actions.common.MakeTempCardInDrawPileAction;
 import com.megacrit.cardcrawl.actions.utility.ShowCardAction;
 import com.megacrit.cardcrawl.actions.utility.ShowCardAndPoofAction;
 import com.megacrit.cardcrawl.actions.utility.UseCardAction;
@@ -175,6 +179,19 @@ public final class ResolutionActionPatches {
     public static class LoseHpPatch {
         @SpireInsertPatch(locator = TickDurationLocator.class)
         public static void expire(LoseHPAction __instance) {
+            ActionDurationAccess.expireNow(__instance);
+        }
+    }
+
+    @SpirePatch2(clz = MakeTempCardAtBottomOfDeckAction.class, method = "update")
+    @SpirePatch2(clz = MakeTempCardInDiscardAction.class, method = "update")
+    @SpirePatch2(clz = MakeTempCardInDiscardAndDeckAction.class, method = "update")
+    @SpirePatch2(clz = MakeTempCardInDrawPileAction.class, method = "update")
+    public static class GeneratedCardActionPatch {
+        @SpireInsertPatch(locator = TickDurationLocator.class)
+        public static void removeTailDelay(AbstractGameAction __instance) {
+            // Preserve the first update, which creates the cards and their effects,
+            // then eliminate only the action's remaining animation wait.
             ActionDurationAccess.expireNow(__instance);
         }
     }

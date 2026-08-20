@@ -12,6 +12,9 @@ import com.megacrit.cardcrawl.vfx.SumDamageEffect;
 import com.megacrit.cardcrawl.vfx.TextAboveCreatureEffect;
 import com.megacrit.cardcrawl.vfx.cardManip.CardDisappearEffect;
 import com.megacrit.cardcrawl.vfx.cardManip.ExhaustCardEffect;
+import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndAddToDiscardEffect;
+import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndAddToDrawPileEffect;
+import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndAddToHandEffect;
 import com.megacrit.cardcrawl.vfx.combat.BlockImpactLineEffect;
 import com.megacrit.cardcrawl.vfx.combat.BlockedNumberEffect;
 import com.megacrit.cardcrawl.vfx.combat.BlockedWordEffect;
@@ -42,6 +45,7 @@ public final class VisualEffectPatches {
     private static final Set<Class<?>> SKIPPABLE_EFFECTS = new HashSet<Class<?>>(Arrays.<Class<?>>asList(
         CardDisappearEffect.class,
         ExhaustCardEffect.class,
+        ShowCardAndAddToHandEffect.class,
         BlockImpactLineEffect.class,
         BlockedNumberEffect.class,
         BlockedWordEffect.class,
@@ -69,6 +73,7 @@ public final class VisualEffectPatches {
     }
 
     @SpirePatch2(clz = CardDisappearEffect.class, method = "update")
+    @SpirePatch2(clz = ShowCardAndAddToHandEffect.class, method = "update")
     @SpirePatch2(clz = BlockImpactLineEffect.class, method = "update")
     @SpirePatch2(clz = BlockedNumberEffect.class, method = "update")
     @SpirePatch2(clz = BlockedWordEffect.class, method = "update")
@@ -102,6 +107,9 @@ public final class VisualEffectPatches {
 
     @SpirePatch2(clz = CardDisappearEffect.class, method = "render", paramtypez = {SpriteBatch.class})
     @SpirePatch2(clz = ExhaustCardEffect.class, method = "render", paramtypez = {SpriteBatch.class})
+    @SpirePatch2(clz = ShowCardAndAddToDiscardEffect.class, method = "render", paramtypez = {SpriteBatch.class})
+    @SpirePatch2(clz = ShowCardAndAddToDrawPileEffect.class, method = "render", paramtypez = {SpriteBatch.class})
+    @SpirePatch2(clz = ShowCardAndAddToHandEffect.class, method = "render", paramtypez = {SpriteBatch.class})
     @SpirePatch2(clz = BlockImpactLineEffect.class, method = "render", paramtypez = {SpriteBatch.class})
     @SpirePatch2(clz = BlockedNumberEffect.class, method = "render", paramtypez = {SpriteBatch.class})
     @SpirePatch2(clz = BlockedWordEffect.class, method = "render", paramtypez = {SpriteBatch.class})
@@ -139,6 +147,19 @@ public final class VisualEffectPatches {
             if (FastModeConfig.isFastModeEnabled()) {
                 // The vanilla update performs card cleanup when duration expires.
                 // Expiring it here keeps that cleanup while bypassing 140 particles.
+                __instance.duration = -1.0F;
+            }
+        }
+    }
+
+    @SpirePatch2(clz = ShowCardAndAddToDiscardEffect.class, method = "update")
+    @SpirePatch2(clz = ShowCardAndAddToDrawPileEffect.class, method = "update")
+    public static class FinishGeneratedCardMovementPatch {
+        @SpirePrefixPatch
+        public static void finishMovement(AbstractGameEffect __instance) {
+            if (FastModeConfig.isFastModeEnabled()) {
+                // Vanilla moves the card into the pile when this effect expires.
+                // Force that branch to run now instead of skipping update entirely.
                 __instance.duration = -1.0F;
             }
         }
