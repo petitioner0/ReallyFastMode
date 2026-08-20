@@ -3,7 +3,7 @@
 
     <properties>
         <modID>ReallyFastMode</modID>
-        <author>Me! (Or well, you. If you want to use \"quotes\" make sure you have slashes in front of them like this.)</author>
+        <author>petitioner0</author>
 
         <!-- Change the path for your system to match your Steam installation. -->
         <!-- If you're not sure, go to Slay the Spire in the Steam library, and choose Manage -> Browse local files -->
@@ -27,9 +27,7 @@
     <version>0.0.0</version>
     <!-- Avoid using \ in this description, as they can cause the description to fail to load. -->
     <!-- If you really want to use them, you'll need to "escape" them by putting another one in front, like \\ -->
-    <description>This is a description!\n"This" is a second line of description.
-        This "\\" is a slash. If you add another line like this:
-        All the spaces on the left of this will be gone. If you want spacing on a new line, do it:\n    like this.</description>
+    <description>this is a mod make sts really fast</description>
 
     <!--You shouldn't need to change anything below this point, but feel free to look at it.-->
     <!--You'll get a warning regarding these when you package your mod, but don't worry, it's just set up like this for convenience.-->
@@ -52,6 +50,13 @@
             <version>${ModTheSpire.version}</version>
             <scope>system</scope>
             <systemPath>${steam.path}/workshop/content/646570/1605060445/ModTheSpire.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>basemod</groupId>
+            <artifactId>basemod</artifactId>
+            <version>5.56.0</version>
+            <scope>system</scope>
+            <systemPath>${steam.path}/workshop/content/646570/1605833019/BaseMod.jar</systemPath>
         </dependency>
     </dependencies>
 
