@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * Semantic combat commands that bypass mouse input while preserving vanilla
- * action, potion, and selection resolution.
+ * action, potion, turn, and selection resolution.
  *
  * <p>These methods read and mutate Slay the Spire's global state and therefore
  * must be called on the game's render thread. A future transport layer should
@@ -134,6 +134,26 @@ public final class CombatApi {
         }
     }
 
+    public static CombatApiResult endTurn() {
+        try {
+            CombatApiResult readiness = validatePlayerCommandReady();
+            if (readiness != null) {
+                return readiness;
+            }
+            if (AbstractDungeon.overlayMenu == null
+                || AbstractDungeon.overlayMenu.endTurnButton == null
+                || !AbstractDungeon.overlayMenu.endTurnButton.enabled) {
+                return CombatApiResult.error("game_busy", "End turn is not currently available.");
+            }
+
+            AbstractDungeon.overlayMenu.endTurnButton.disable(true);
+            return CombatApiResult.success("End turn queued.");
+        } catch (RuntimeException exception) {
+            LOGGER.error("Unable to execute end_turn.", exception);
+            return CombatApiResult.error("internal_error", "end_turn failed unexpectedly.");
+        }
+    }
+
     public static CombatApiResult selectCards(String... cardIds) {
         if (cardIds == null) {
             return selectCards((List<String>) null);
@@ -150,6 +170,20 @@ public final class CombatApi {
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute select_cards.", exception);
             return CombatApiResult.error("internal_error", "select_cards failed unexpectedly.");
+        }
+    }
+
+    /**
+     * Skips a pending combat card-reward choice when vanilla marked that
+     * choice as skippable. This is intentionally different from confirming a
+     * legal zero-card hand or grid selection with {@code selectCards([])}.
+     */
+    public static CombatApiResult skipCardSelection() {
+        try {
+            return CombatSelectionAdapter.skipCardSelection();
+        } catch (RuntimeException exception) {
+            LOGGER.error("Unable to execute skip_card_selection.", exception);
+            return CombatApiResult.error("internal_error", "skip_card_selection failed unexpectedly.");
         }
     }
 

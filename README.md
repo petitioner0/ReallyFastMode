@@ -24,12 +24,16 @@
 ```java
 CombatApiResult playResult = CombatApi.playCard(cardId, targetId);
 CombatApiResult potionResult = CombatApi.usePotion(potionSlot, targetId);
+CombatApiResult endTurnResult = CombatApi.endTurn();
 CombatApiResult selectionResult = CombatApi.selectCards(cardIds);
+CombatApiResult skipResult = CombatApi.skipCardSelection();
 ```
 
 - `playCard`：从当前手牌中定位卡牌并加入原版出牌队列。
 - `usePotion`：使用指定药水槽中的药水，并执行原版遗物回调和药水移除流程。
-- `selectCards`：处理战斗中的手牌选择、网格选择和部分卡牌奖励选择界面。
+- `endTurn`：触发原版结束回合按钮流程，排队执行玩家回合收尾和敌方回合。
+- `selectCards`：处理战斗中的手牌选择、网格选择和部分卡牌奖励选择界面；空数组只表示确认一个原版允许的零张选择。
+- `skipCardSelection`：仅在原版将当前战斗卡牌奖励选择标记为可跳过时执行 Skip。
 - 所有命令都返回 `CombatApiResult`，其中包含成功状态、错误码和说明消息。
 
 标识规则：
@@ -59,4 +63,4 @@ CombatApiResult selectionResult = CombatApi.selectCards(cardIds);
 - 洗牌和抽牌保留原版随机数、逐卡回调、遗物回调及能力回调。
 - 带有玩法副作用的视觉 Effect 不会作为纯动画过滤。
 - 跨幕和返回主菜单使用的全局场景转场暂时保留。
-- 战斗 API 只在战斗空闲、玩家可操作且没有其他界面阻塞时接受出牌和药水命令。
+- 战斗 API 只在战斗空闲、玩家可操作且没有其他界面阻塞时接受出牌、药水和结束回合命令。
