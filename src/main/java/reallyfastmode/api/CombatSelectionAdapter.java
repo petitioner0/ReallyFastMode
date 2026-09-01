@@ -1,6 +1,5 @@
 package reallyfastmode.api;
 
-import basemod.ReflectionHacks;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
@@ -8,6 +7,7 @@ import com.megacrit.cardcrawl.screens.CardRewardScreen;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.screens.select.HandCardSelectScreen;
 import com.megacrit.cardcrawl.vfx.cardManip.ExhaustCardEffect;
+import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -70,11 +70,7 @@ final class CombatSelectionAdapter {
             );
         }
 
-        boolean skippable = ReflectionHacks.getPrivate(
-            screen,
-            CardRewardScreen.class,
-            "skippable"
-        );
+        boolean skippable = PrivateFieldAccess.cardRewardSkippable(screen);
         if (!skippable) {
             return CombatApiResult.error(
                 "selection_not_skippable",
@@ -107,11 +103,7 @@ final class CombatSelectionAdapter {
             return resolution.error;
         }
 
-        boolean anyNumber = ReflectionHacks.getPrivate(
-            screen,
-            HandCardSelectScreen.class,
-            "anyNumber"
-        );
+        boolean anyNumber = PrivateFieldAccess.handSelectAnyNumber(screen);
         SelectionCountRule countRule = anyNumber || screen.upTo
             ? SelectionCountRule.range(screen.numCardsToSelect, screen.canPickZero)
             : SelectionCountRule.exact(screen.numCardsToSelect, screen.canPickZero);
@@ -137,11 +129,7 @@ final class CombatSelectionAdapter {
         AbstractDungeon.player.hand.refreshHandLayout();
         AbstractDungeon.closeCurrentScreen();
 
-        boolean forTransform = ReflectionHacks.getPrivate(
-            screen,
-            HandCardSelectScreen.class,
-            "forTransform"
-        );
+        boolean forTransform = PrivateFieldAccess.handSelectForTransform(screen);
         if (forTransform && screen.selectedCards.size() == 1) {
             AbstractDungeon.srcTransformCard(screen.selectedCards.getBottomCard());
             screen.selectedCards.clear();
@@ -163,16 +151,8 @@ final class CombatSelectionAdapter {
             return resolution.error;
         }
 
-        int requiredCount = ReflectionHacks.getPrivate(
-            screen,
-            GridCardSelectScreen.class,
-            "numCards"
-        );
-        boolean forClarity = ReflectionHacks.getPrivate(
-            screen,
-            GridCardSelectScreen.class,
-            "forClarity"
-        );
+        int requiredCount = PrivateFieldAccess.gridSelectRequiredCount(screen);
+        boolean forClarity = screen.forClarity;
         SelectionCountRule countRule = forClarity
             ? SelectionCountRule.exact(1, false)
             : screen.anyNumber
@@ -194,12 +174,7 @@ final class CombatSelectionAdapter {
             card.stopGlowing();
             screen.selectedCards.add(card);
         }
-        ReflectionHacks.setPrivate(
-            screen,
-            GridCardSelectScreen.class,
-            "cardSelectAmount",
-            resolution.cards.size()
-        );
+        PrivateFieldAccess.setGridSelectAmount(screen, resolution.cards.size());
         AbstractDungeon.overlayMenu.cancelButton.hide();
         AbstractDungeon.closeCurrentScreen();
         return CombatApiResult.success("Selected " + resolution.cards.size() + " card(s) from grid.");
@@ -211,8 +186,8 @@ final class CombatSelectionAdapter {
             return CombatApiResult.error("no_card_selection_pending", "Combat card choices are unavailable.");
         }
 
-        boolean chooseOne = ReflectionHacks.getPrivate(screen, CardRewardScreen.class, "chooseOne");
-        boolean skippable = ReflectionHacks.getPrivate(screen, CardRewardScreen.class, "skippable");
+        boolean chooseOne = PrivateFieldAccess.cardRewardChooseOne(screen);
+        boolean skippable = PrivateFieldAccess.cardRewardSkippable(screen);
         SelectionCountRule countRule = SelectionCountRule.exact(1, false);
         if (!countRule.allows(requestedCardIds.size())) {
             String suffix = skippable
@@ -278,8 +253,8 @@ final class CombatSelectionAdapter {
         if (screen == null || screen.rewardGroup == null) {
             return false;
         }
-        boolean discovery = ReflectionHacks.getPrivate(screen, CardRewardScreen.class, "discovery");
-        boolean chooseOne = ReflectionHacks.getPrivate(screen, CardRewardScreen.class, "chooseOne");
+        boolean discovery = PrivateFieldAccess.cardRewardDiscovery(screen);
+        boolean chooseOne = PrivateFieldAccess.cardRewardChooseOne(screen);
         return discovery || chooseOne;
     }
 

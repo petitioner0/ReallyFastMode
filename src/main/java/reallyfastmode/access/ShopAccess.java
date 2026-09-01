@@ -1,6 +1,5 @@
 package reallyfastmode.access;
 
-import basemod.ReflectionHacks;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
@@ -8,6 +7,7 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,14 +50,14 @@ public final class ShopAccess {
         ShopScreen screen = AbstractDungeon.shopScreen;
         return !active() || screen == null
             ? Collections.<StoreRelic>emptyList()
-            : immutableCopy(privateField(screen, "relics"));
+            : immutableCopy(PrivateFieldAccess.shopRelics(screen));
     }
 
     public static List<StorePotion> potions() {
         ShopScreen screen = AbstractDungeon.shopScreen;
         return !active() || screen == null
             ? Collections.<StorePotion>emptyList()
-            : immutableCopy(privateField(screen, "potions"));
+            : immutableCopy(PrivateFieldAccess.shopPotions(screen));
     }
 
     public static boolean purgeAvailable() {
@@ -103,17 +103,6 @@ public final class ShopAccess {
 
     private static StorePotion storePotion(StorePotion storePotion) {
         return Objects.requireNonNull(storePotion, "storePotion");
-    }
-
-    private static <T> T privateField(ShopScreen screen, String fieldName) {
-        try {
-            return ReflectionHacks.getPrivate(screen, ShopScreen.class, fieldName);
-        } catch (RuntimeException exception) {
-            throw new IllegalStateException(
-                "Unable to read ShopScreen." + fieldName + "; the STS field layout may be unsupported.",
-                exception
-            );
-        }
     }
 
     private static <T> List<T> immutableCopy(List<T> source) {

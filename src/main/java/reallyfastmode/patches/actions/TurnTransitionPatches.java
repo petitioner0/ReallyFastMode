@@ -12,17 +12,12 @@ import com.megacrit.cardcrawl.actions.unique.RestoreRetainedCardsAction;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.vfx.EnemyTurnEffect;
 import com.megacrit.cardcrawl.vfx.PlayerTurnEffect;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import reallyfastmode.config.FastModeConfig;
+import reallyfastmode.patches.access.PrivateFieldAccess;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 public final class TurnTransitionPatches {
-    private static final Logger LOGGER = LogManager.getLogger(TurnTransitionPatches.class.getName());
-    private static final Field DISCARD_END_TURN_FIELD = findDiscardEndTurnField();
-
     private TurnTransitionPatches() {
     }
 
@@ -30,7 +25,7 @@ public final class TurnTransitionPatches {
     public static class EndTurnDiscardQueuePatch {
         @SpirePostfixPatch
         public static void collapseDuplicateDiscards() {
-            if (!FastModeConfig.isFastModeEnabled() || DISCARD_END_TURN_FIELD == null) {
+            if (!FastModeConfig.isFastModeEnabled()) {
                 return;
             }
 
@@ -101,26 +96,9 @@ public final class TurnTransitionPatches {
     }
 
     private static boolean isEndTurnDiscard(AbstractGameAction action) {
-        if (action == null || action.getClass() != DiscardAction.class || DISCARD_END_TURN_FIELD == null) {
+        if (action == null || action.getClass() != DiscardAction.class) {
             return false;
         }
-
-        try {
-            return DISCARD_END_TURN_FIELD.getBoolean(action);
-        } catch (IllegalAccessException exception) {
-            LOGGER.error("Unable to inspect end-turn DiscardAction.", exception);
-            return false;
-        }
-    }
-
-    private static Field findDiscardEndTurnField() {
-        try {
-            Field field = DiscardAction.class.getDeclaredField("endTurn");
-            field.setAccessible(true);
-            return field;
-        } catch (NoSuchFieldException exception) {
-            LOGGER.error("Unable to access DiscardAction.endTurn; end-turn discards will use vanilla timing.", exception);
-            return null;
-        }
+        return PrivateFieldAccess.discardEndsTurn((DiscardAction) action);
     }
 }

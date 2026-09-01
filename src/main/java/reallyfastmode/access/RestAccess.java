@@ -1,10 +1,10 @@
 package reallyfastmode.access;
 
-import basemod.ReflectionHacks;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.CampfireUI;
 import com.megacrit.cardcrawl.rooms.RestRoom;
 import com.megacrit.cardcrawl.ui.campfire.AbstractCampfireOption;
+import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +43,7 @@ public final class RestAccess {
         if (!inRestRoom() || ((RestRoom) AbstractDungeon.getCurrRoom()).campfireUI == null) {
             return Collections.emptyList();
         }
-        return immutableCopy(privateField(campfire(), CampfireUI.class, "buttons"));
+        return immutableCopy(PrivateFieldAccess.campfireButtons(campfire()));
     }
 
     public static boolean usable(AbstractCampfireOption option) {
@@ -52,18 +52,6 @@ public final class RestAccess {
 
     private static AbstractCampfireOption option(AbstractCampfireOption option) {
         return Objects.requireNonNull(option, "option");
-    }
-
-    private static <T> T privateField(Object instance, Class<?> owner, String fieldName) {
-        try {
-            return ReflectionHacks.getPrivate(instance, owner, fieldName);
-        } catch (RuntimeException exception) {
-            throw new IllegalStateException(
-                "Unable to read " + owner.getSimpleName() + "." + fieldName
-                    + "; the STS field layout may be unsupported.",
-                exception
-            );
-        }
     }
 
     private static <T> List<T> immutableCopy(List<T> source) {

@@ -1,11 +1,11 @@
 package reallyfastmode.access;
 
-import basemod.ReflectionHacks;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.monsters.MonsterGroup;
 import com.megacrit.cardcrawl.powers.AbstractPower;
+import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,19 +71,19 @@ public final class MonsterAccess {
     }
 
     public static int intentDamage(AbstractMonster monster) {
-        return privateField(monster(monster), "intentDmg");
+        return monster(monster).getIntentDmg();
     }
 
     public static int intentBaseDamage(AbstractMonster monster) {
-        return privateField(monster(monster), "intentBaseDmg");
+        return monster(monster).getIntentBaseDmg();
     }
 
     public static int intentMultiAmount(AbstractMonster monster) {
-        return privateField(monster(monster), "intentMultiAmt");
+        return PrivateFieldAccess.monsterIntentMultiAmount(monster(monster));
     }
 
     public static boolean multiDamageIntent(AbstractMonster monster) {
-        return privateField(monster(monster), "isMultiDmg");
+        return PrivateFieldAccess.monsterHasMultiDamageIntent(monster(monster));
     }
 
     private static MonsterGroup currentGroup() {
@@ -92,17 +92,6 @@ public final class MonsterAccess {
 
     private static AbstractMonster monster(AbstractMonster monster) {
         return Objects.requireNonNull(monster, "monster");
-    }
-
-    private static <T> T privateField(AbstractMonster monster, String fieldName) {
-        try {
-            return ReflectionHacks.getPrivate(monster, AbstractMonster.class, fieldName);
-        } catch (RuntimeException exception) {
-            throw new IllegalStateException(
-                "Unable to read AbstractMonster." + fieldName + "; the STS field layout may be unsupported.",
-                exception
-            );
-        }
     }
 
     private static <T> List<T> immutableCopy(List<T> source) {
