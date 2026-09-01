@@ -46,6 +46,26 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 
 > 战斗 API 会直接读取并修改《杀戮尖塔》的全局状态，因此必须在游戏渲染线程调用。目前项目没有提供 HTTP、WebSocket 或其他外部传输层。
 
+### 原子状态读取 API
+
+`reallyfastmode.access` 提供只读的游戏状态入口：
+
+```java
+int hp = PlayerAccess.hp();
+int energy = PlayerAccess.energy();
+List<AbstractCard> hand = CardAccess.hand();
+List<AbstractMonster> monsters = MonsterAccess.monsters();
+List<AbstractCard> candidates = SelectionAccess.candidates();
+List<MapRoomNode> nodes = MapAccess.availableMapNodes();
+```
+
+读取层按领域分为 `GameAccess`、`PlayerAccess`、`CombatAccess`、`CardAccess`、`MonsterAccess`、`PotionAccess`、`SelectionAccess`、`MapAccess`、`RewardAccess`、`EventAccess`、`ShopAccess` 和 `RestAccess`。
+
+- 数据始终来自当前 `AbstractDungeon`、Player、Room、Screen 或 Action，不缓存完整状态，也不提供历史记录。
+- 集合是不可修改的浅拷贝，其中的卡牌、怪物等奖励对象仍是当前真实 STS 对象。
+- 读取层不生成 JSON 或 packet，不处理 transport，也不决定下一步行动。
+- 所有读取都必须在游戏渲染线程调用；返回的原版对象应当视为只读。
+
 ## 运行环境
 
 - 《杀戮尖塔》`12-18-2022`
