@@ -9,7 +9,7 @@
 ### 快速模式
 
 - 跳过纯等待和纯展示 Action。
-- 加速出牌、伤害、格挡、治疗、抽牌、洗牌及回合切换。
+- 加速出牌、伤害、格挡、治疗、抽牌、洗牌、回合切换及战斗结束后的奖励衔接。
 - 跳过卡牌飞行动画、伤害数字、粒子、攻击动作和屏幕震动。
 - 跳过普通房间之间的淡入淡出。
 - 保留结算相关的原版 `update()`、卡牌移动、遗物/能力回调和洗牌随机结果。
@@ -55,6 +55,8 @@ int hp = PlayerAccess.hp();
 int energy = PlayerAccess.energy();
 List<AbstractCard> hand = CardAccess.hand();
 List<AbstractMonster> monsters = MonsterAccess.monsters();
+int monsterInstanceId = MonsterAccess.instanceId(monsters.get(0));
+byte monsterInstanceId4Bit = MonsterAccess.instanceId4Bit(monsters.get(0));
 List<AbstractCard> candidates = SelectionAccess.candidates();
 List<MapRoomNode> nodes = MapAccess.availableMapNodes();
 ```
@@ -63,8 +65,21 @@ List<MapRoomNode> nodes = MapAccess.availableMapNodes();
 
 - 数据始终来自当前 `AbstractDungeon`、Player、Room、Screen 或 Action，不缓存完整状态，也不提供历史记录。
 - 集合是不可修改的浅拷贝，其中的卡牌、怪物等奖励对象仍是当前真实 STS 对象。
+- 每个已初始化怪物拥有房间内实例 ID；`MonsterAccess.instanceId4Bit(monster)` 使用高四位恒为零的 `byte` 容器返回 `0`–`15`，第 17 个怪物初始化时直接报错。
 - 读取层不生成 JSON 或 packet，不处理 transport，也不决定下一步行动。
 - 所有读取都必须在游戏渲染线程调用；返回的原版对象应当视为只读。
+
+### 状态协议 Slot
+
+`reallyfastmode.protocol.ProtocolSlots` 定义了状态协议顶层和各读取领域子级的固定数组下标，但不负责读取或填充数据：
+
+```java
+Object[] protocol = new Object[ProtocolSlots.SIZE];
+Object[] monster = new Object[ProtocolSlots.Monster.SIZE];
+protocol[ProtocolSlots.MONSTER] = monster;
+```
+
+新建数组中的 slot 默认均为 `null`。后续读取时只填充实际获取的信息，未填充的 slot 保持 `null`；怪物实例在协议中只使用 `ProtocolSlots.Monster.INSTANCE_ID_4_BIT`。
 
 ## 运行环境
 
