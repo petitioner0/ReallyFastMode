@@ -5,6 +5,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.monsters.MonsterGroup;
 import com.megacrit.cardcrawl.powers.AbstractPower;
+import reallyfastmode.patches.access.MonsterInstanceIdPatches;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.ArrayList;
@@ -36,6 +37,16 @@ public final class MonsterAccess {
 
     public static String id(AbstractMonster monster) {
         return monster(monster).id;
+    }
+
+    /** Returns this monster's room-local id in the inclusive range 0-15. */
+    public static int instanceId(AbstractMonster monster) {
+        return MonsterInstanceIdPatches.instanceId(monster(monster));
+    }
+
+    /** Returns the instance id in a byte container whose upper four bits are zero. */
+    public static byte instanceId4Bit(AbstractMonster monster) {
+        return (byte) (instanceId(monster) & 0xF);
     }
 
     public static String name(AbstractMonster monster) {
