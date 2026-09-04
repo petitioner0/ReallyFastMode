@@ -7,6 +7,7 @@ import com.megacrit.cardcrawl.monsters.MonsterGroup;
 import com.megacrit.cardcrawl.powers.AbstractPower;
 import reallyfastmode.patches.access.MonsterInstanceIdPatches;
 import reallyfastmode.patches.access.PrivateFieldAccess;
+import reallyfastmode.protocol.VanillaMonsterCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +38,10 @@ public final class MonsterAccess {
 
     public static String id(AbstractMonster monster) {
         return monster(monster).id;
+    }
+
+    public static int wireId(AbstractMonster monster) {
+        return VanillaMonsterCatalog.monsterIdToWireId.get(monster(monster).id);
     }
 
     /** Returns this monster's room-local id in the inclusive range 0-15. */

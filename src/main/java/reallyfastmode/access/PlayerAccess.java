@@ -11,6 +11,7 @@ import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /** Reads player state without retaining a player snapshot. */
 public final class PlayerAccess {
@@ -83,6 +84,10 @@ public final class PlayerAccess {
         return AbstractDungeon.player == null
             ? Collections.<AbstractRelic>emptyList()
             : immutableCopy(AbstractDungeon.player.relics);
+    }
+
+    public static int relicCounter(AbstractRelic relic) {
+        return Objects.requireNonNull(relic, "relic").counter;
     }
 
     public static List<AbstractOrb> orbs() {

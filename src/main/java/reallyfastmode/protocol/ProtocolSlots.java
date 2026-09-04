@@ -60,7 +60,7 @@ public final class ProtocolSlots {
         public static final int MAX_ORBS = 10;
         public static final int MASTER_MAX_ORBS = 11;
         public static final int POWERS = 12;
-        public static final int RELICS = 13;
+        public static final int RELICS_WIRE_ID = 13;
         public static final int RELICS_COUNT = 14;
         public static final int ORBS = 15;
         public static final int STANCE = 16;
@@ -85,7 +85,7 @@ public final class ProtocolSlots {
         public static final int HAND = 1;
         public static final int DISCARD_PILE = 2;
         public static final int EXHAUST_PILE = 3;
-        public static final int CARD_ID = 4;
+        public static final int CARD_WIRE_ID = 4;
         public static final int TYPE = 5;
         public static final int TARGET = 6;
         public static final int RARITY = 7;
@@ -106,7 +106,7 @@ public final class ProtocolSlots {
     /** Slots corresponding to {@code MonsterAccess}. */
     public static final class Monster {
         public static final int INSTANCE_ID_4_BIT = 0;
-        public static final int NAME = 1;
+        public static final int WIRE_ID = 1;
         public static final int HP = 2;
         public static final int MAX_HP = 3;
         public static final int BLOCK = 4;
@@ -125,7 +125,7 @@ public final class ProtocolSlots {
     /** Slots corresponding to {@code PotionAccess}. */
     public static final class Potion {
         public static final int POTIONS = 0;
-        public static final int ID = 1;
+        public static final int WIRED_ID = 1;
         public static final int NAME = 2;
         public static final int SLOT = 3;
         public static final int PRICE = 4;

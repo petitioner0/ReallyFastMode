@@ -3,6 +3,7 @@ package reallyfastmode.access;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.potions.PotionSlot;
+import reallyfastmode.protocol.VanillaPotionCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,8 +36,8 @@ public final class PotionAccess {
         return potion(potion).ID;
     }
 
-    public static String name(AbstractPotion potion) {
-        return potion(potion).name;
+    public static int wireId(AbstractPotion potion) {
+        return VanillaPotionCatalog.potionIdToWireId.get(potion(potion).ID);
     }
 
     public static int slot(AbstractPotion potion) {
