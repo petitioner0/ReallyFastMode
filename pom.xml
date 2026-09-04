@@ -58,6 +58,12 @@
             <scope>system</scope>
             <systemPath>${steam.path}/workshop/content/646570/1605833019/BaseMod.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.6</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 
@@ -192,6 +198,23 @@
                         <version>3.5.0</version>
                         <configuration>
                             <mainClass>reallyfastmode.codegen.VanillaCardCatalogGenerator</mainClass>
+                            <classpathScope>test</classpathScope>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>entity-catalog-codegen</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <configuration>
+                            <mainClass>reallyfastmode.codegen.VanillaEntityCatalogGenerator</mainClass>
                             <classpathScope>test</classpathScope>
                         </configuration>
                     </plugin>

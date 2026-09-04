@@ -3,12 +3,12 @@ package reallyfastmode.access;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
+import reallyfastmode.protocol.VanillaCardCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 /** Reads cards and card piles from the current player. */
 public final class CardAccess {
@@ -39,21 +39,12 @@ public final class CardAccess {
         return group(Group.LIMBO);
     }
 
-    public static UUID uuid(AbstractCard card) {
-        return card(card).uuid;
-    }
-
-    public static String uuidString(AbstractCard card) {
-        UUID uuid = uuid(card);
-        return uuid == null ? null : uuid.toString();
-    }
-
     public static String cardId(AbstractCard card) {
         return card(card).cardID;
     }
 
-    public static String name(AbstractCard card) {
-        return card(card).name;
+    public static int wireId(AbstractCard card) {
+        return VanillaCardCatalog.cardIdToWireId.get(cardId(card));
     }
 
     public static AbstractCard.CardType type(AbstractCard card) {
