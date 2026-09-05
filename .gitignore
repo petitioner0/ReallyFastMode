@@ -5,8 +5,4 @@
 
 /reference/
 AGENT.md
-/describe/*
-!/describe/protocol/
-/describe/protocol/*
-!/describe/protocol/monster-soa.md
-!/describe/protocol/vanilla-card-catalog.md
+/describe/
