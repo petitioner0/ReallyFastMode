@@ -1,11 +1,12 @@
 package reallyfastmode.protocol;
 
 /**
- * Zero-based slot indexes for the observation protocol.
+ * Reference-only zero-based ordering for the concrete observation slots.
  *
- * <p>The constants only describe the array layout. Callers create and populate
- * their own {@code Object[]} instances; newly allocated arrays therefore keep
- * every unpopulated slot as {@code null}.</p>
+ * <p>This class documents the intended slot order; it is not an implementation
+ * based on {@code Object[]} and must not be used as one. Object arrays do not
+ * provide the required performance characteristics, so concrete slot types use
+ * this ordering only as a reference.</p>
  */
 public final class ProtocolSlots {
     public static final int GAME = 0;
@@ -106,14 +107,14 @@ public final class ProtocolSlots {
     /** Slots corresponding to {@code MonsterAccess}. */
     public static final class Monster {
         public static final int INSTANCE_ID_4_BIT = 0;
-        public static final int WIRE_ID = 1;
+        public static final int MONSTER_WIRE_ID = 1;
         public static final int HP = 2;
         public static final int MAX_HP = 3;
         public static final int BLOCK = 4;
-        public static final int POWERS = 5;
-        public static final int TYPE = 6;
-        public static final int INTENT = 7;
-        public static final int DAMAGE = 8;
+        public static final int POWER_ENTRY_COUNT = 5;
+        public static final int POWER_WIRE_ID = 6;
+        public static final int POWER_AMOUNT = 7;
+        public static final int INTENT_WIRE_ID = 8;
         public static final int INTENT_DAMAGE = 9;
         public static final int INTENT_MULTI_AMOUNT = 10;
         public static final int SIZE = 11;

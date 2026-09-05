@@ -69,17 +69,18 @@ List<MapRoomNode> nodes = MapAccess.availableMapNodes();
 - 读取层不生成 JSON 或 packet，不处理 transport，也不决定下一步行动。
 - 所有读取都必须在游戏渲染线程调用；返回的原版对象应当视为只读。
 
-### 状态协议 Slot
+### Monster SoA 协议
 
-`reallyfastmode.protocol.ProtocolSlots` 定义了状态协议顶层和各读取领域子级的固定数组下标，但不负责读取或填充数据：
+`MonsterColumnsBuilder` 将调用方给出的怪物列表捕获为 SoA，`MonsterBlockWriter` 再按固定列顺序写入 MSB-first、big-endian bit stream：
 
 ```java
-Object[] protocol = new Object[ProtocolSlots.SIZE];
-Object[] monster = new Object[ProtocolSlots.Monster.SIZE];
-protocol[ProtocolSlots.MONSTER] = monster;
+MonsterColumns monsters = MonsterColumnsBuilder.build(MonsterAccess.monsters());
+BitWriter out = new BitWriter(128);
+MonsterBlockWriter.write(out, monsters);
+byte[] block = out.toByteArray();
 ```
 
-新建数组中的 slot 默认均为 `null`。后续读取时只填充实际获取的信息，未填充的 slot 保持 `null`；怪物实例在协议中只使用 `ProtocolSlots.Monster.INSTANCE_ID_4_BIT`。
+捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物；未知原版目录 ID、Power/Intent 临时 wire ID 和每列精确位宽记录在 [`describe/protocol/monster-soa.md`](describe/protocol/monster-soa.md)。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
 
 ## 运行环境
 

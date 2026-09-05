@@ -5,4 +5,7 @@
 
 /reference/
 AGENT.md
-/describe/
+/describe/*
+!/describe/protocol/
+/describe/protocol/*
+!/describe/protocol/monster-soa.md

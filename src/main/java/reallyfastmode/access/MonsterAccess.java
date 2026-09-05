@@ -7,6 +7,7 @@ import com.megacrit.cardcrawl.monsters.MonsterGroup;
 import com.megacrit.cardcrawl.powers.AbstractPower;
 import reallyfastmode.patches.access.MonsterInstanceIdPatches;
 import reallyfastmode.patches.access.PrivateFieldAccess;
+import reallyfastmode.protocol.MonsterProtocol;
 import reallyfastmode.protocol.VanillaMonsterCatalog;
 
 import java.util.ArrayList;
@@ -40,8 +41,10 @@ public final class MonsterAccess {
         return monster(monster).id;
     }
 
+    /** Returns the vanilla wire id, or the protocol's fixed unknown id. */
     public static int wireId(AbstractMonster monster) {
-        return VanillaMonsterCatalog.monsterIdToWireId.get(monster(monster).id);
+        Integer wireId = VanillaMonsterCatalog.monsterIdToWireId.get(monster(monster).id);
+        return wireId == null ? MonsterProtocol.UNKNOWN_MONSTER_WIRE_ID : wireId;
     }
 
     /** Returns this monster's room-local id in the inclusive range 0-15. */
