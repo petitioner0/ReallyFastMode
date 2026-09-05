@@ -80,7 +80,7 @@ MonsterBlockWriter.write(out, monsters);
 byte[] block = out.toByteArray();
 ```
 
-捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物；未知原版目录 ID、Power/Intent 临时 wire ID 和每列精确位宽记录在 [`describe/protocol/monster-soa.md`](describe/protocol/monster-soa.md)。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
+捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物；Monster、Power、Intent wire ID 和每列精确位宽记录在 [`describe/protocol/monster-soa.md`](describe/protocol/monster-soa.md)。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
 
 ## 运行环境
 

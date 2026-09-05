@@ -33,9 +33,9 @@ List<AbstractMonster>
 | 5 | `max_hp` | N | 12-bit unsigned |
 | 6 | `block` | N | 16-bit unsigned |
 | 7 | `power_entry_count` | N | 5-bit unsigned，单只怪物限制 0–31 |
-| 8 | `power_wire_id` | P | 12-bit unsigned；当前固定为 0 |
+| 8 | `power_wire_id` | P | 12-bit unsigned |
 | 9 | `power_amount` | P | 12-bit signed，范围 -2048–2047 |
-| 10 | `intent_wire_id` | N | 5-bit unsigned；当前固定为 17 |
+| 10 | `intent_wire_id` | N | 5-bit unsigned |
 | 11 | `intent_damage` | N | 8-bit unsigned |
 | 12 | `intent_multi_amount` | N | 8-bit unsigned |
 
@@ -46,13 +46,13 @@ List<AbstractMonster>
 - 非攻击意图编码为 `intent_damage=0, intent_multi_amount=0`。
 - 单段攻击编码为当前每段伤害和 `intent_multi_amount=1`。
 - 多段攻击编码为当前每段伤害和原版的真实攻击段数。
-- 当前尚未分配 Intent wire ID，因此所有 Intent（包括 null）暂时编码为 UNKNOWN `17`。
+- Intent 直接使用 `AbstractMonster.Intent.ordinal()`：当前 17 个枚举值对应 `0–16`，null 使用 UNKNOWN `17`。
 
-## Wire IDs and TODOs
+## Wire IDs
 
 - `VanillaMonsterCatalog` 当前固定原版 Monster wire ID `0–65`，未知 Monster 使用尾值 `66`。
-- Power catalog 尚未定义；本阶段保留 Power 的列表形状与 `amount`，但所有 `power_wire_id` 使用临时 UNKNOWN `0`。
-- Power 和 Intent catalog 落地时，需要同步确定占位值迁移和 packet 协议版本兼容策略。
+- `VanillaPowerCatalog` 按 `POWER_ID` 字典序固定 159 个原版 Power wire ID `0–158`，未知 Power 使用尾值 `159`。
+- 重新生成 Monster 或 Power catalog 后，如果条目数量或既有 ID 顺序变化，需要同步升级 packet 协议版本。
 
 ## Bounds and omitted state
 

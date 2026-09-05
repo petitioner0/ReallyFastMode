@@ -4,6 +4,7 @@ import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import org.junit.Test;
 import reallyfastmode.protocol.MonsterProtocol;
 import reallyfastmode.protocol.VanillaMonsterCatalog;
+import reallyfastmode.protocol.VanillaPowerCatalog;
 
 import java.util.Collections;
 
@@ -24,6 +25,10 @@ public class MonsterColumnsBuilderTest {
     public void unknownMonsterIdFollowsCurrentCatalogTail() {
         assertEquals(VanillaMonsterCatalog.values().length,
             MonsterProtocol.UNKNOWN_MONSTER_WIRE_ID);
+        assertEquals(VanillaPowerCatalog.values().length,
+            MonsterProtocol.UNKNOWN_POWER_WIRE_ID);
+        assertEquals(AbstractMonster.Intent.values().length,
+            MonsterProtocol.UNKNOWN_INTENT_WIRE_ID);
     }
 
     @Test
@@ -34,7 +39,9 @@ public class MonsterColumnsBuilderTest {
         source.hp = new int[]{40, 0};
         source.maxHp = new int[]{50, 4095};
         source.block = new int[]{12, 0};
+        source.powerWireId = new int[][]{{5, MonsterProtocol.UNKNOWN_POWER_WIRE_ID}, {}};
         source.powerAmount = new int[][]{{2, -1}, {}};
+        source.intentWireId = new int[]{0, MonsterProtocol.UNKNOWN_INTENT_WIRE_ID};
         source.attack = new boolean[]{true, false};
         source.intentDamage = new int[]{13, -1};
         source.multi = new boolean[]{false, false};
@@ -47,9 +54,9 @@ public class MonsterColumnsBuilderTest {
         assertArrayEquals(new byte[]{3, 8}, columns.instanceId4Bit);
         assertArrayEquals(new int[]{1, 66}, columns.monsterWireId);
         assertArrayEquals(new int[]{2, 0}, columns.powerEntryCount);
-        assertArrayEquals(new int[]{0, 0}, columns.powerWireId);
+        assertArrayEquals(new int[]{5, 159}, columns.powerWireId);
         assertArrayEquals(new int[]{2, -1}, columns.powerAmount);
-        assertArrayEquals(new int[]{17, 17}, columns.intentWireId);
+        assertArrayEquals(new int[]{0, 17}, columns.intentWireId);
         assertArrayEquals(new int[]{13, 0}, columns.intentDamage);
         assertArrayEquals(new int[]{1, 0}, columns.intentMultiAmount);
     }
@@ -101,7 +108,9 @@ public class MonsterColumnsBuilderTest {
         private int[] hp;
         private int[] maxHp;
         private int[] block;
+        private int[][] powerWireId;
         private int[][] powerAmount;
+        private int[] intentWireId;
         private boolean[] attack;
         private int[] intentDamage;
         private boolean[] multi;
@@ -113,7 +122,9 @@ public class MonsterColumnsBuilderTest {
             hp = new int[size];
             maxHp = new int[size];
             block = new int[size];
+            powerWireId = new int[size][0];
             powerAmount = new int[size][0];
+            intentWireId = new int[size];
             attack = new boolean[size];
             intentDamage = new int[size];
             multi = new boolean[size];
@@ -153,6 +164,16 @@ public class MonsterColumnsBuilderTest {
         @Override
         public int powerAmount(int monsterIndex, int powerIndex) {
             return powerAmount[monsterIndex][powerIndex];
+        }
+
+        @Override
+        public int powerWireId(int monsterIndex, int powerIndex) {
+            return powerWireId[monsterIndex][powerIndex];
+        }
+
+        @Override
+        public int intentWireId(int monsterIndex) {
+            return intentWireId[monsterIndex];
         }
 
         @Override

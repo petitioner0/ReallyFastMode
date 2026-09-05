@@ -9,6 +9,7 @@ import reallyfastmode.patches.access.MonsterInstanceIdPatches;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 import reallyfastmode.protocol.MonsterProtocol;
 import reallyfastmode.protocol.VanillaMonsterCatalog;
+import reallyfastmode.protocol.VanillaPowerCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,12 +78,25 @@ public final class MonsterAccess {
         return immutableCopy(monster(monster).powers);
     }
 
+    /** Returns the vanilla power wire id, or the protocol's fixed unknown id. */
+    public static int powerWireId(AbstractPower power) {
+        AbstractPower checkedPower = Objects.requireNonNull(power, "power");
+        Integer wireId = VanillaPowerCatalog.powerIdToWireId.get(checkedPower.ID);
+        return wireId == null ? MonsterProtocol.UNKNOWN_POWER_WIRE_ID : wireId;
+    }
+
     public static AbstractMonster.EnemyType type(AbstractMonster monster) {
         return monster(monster).type;
     }
 
     public static AbstractMonster.Intent intent(AbstractMonster monster) {
         return monster(monster).intent;
+    }
+
+    /** Returns the current Intent enum ordinal, or the fixed unknown id for null. */
+    public static int intentWireId(AbstractMonster monster) {
+        AbstractMonster.Intent intent = intent(monster);
+        return intent == null ? MonsterProtocol.UNKNOWN_INTENT_WIRE_ID : intent.ordinal();
     }
 
     public static List<DamageInfo> damage(AbstractMonster monster) {

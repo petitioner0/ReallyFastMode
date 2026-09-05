@@ -74,14 +74,20 @@ public final class MonsterColumnsBuilder {
             result.powerEntryCount[i] = powerCount;
             for (int j = 0; j < powerCount; j++) {
                 int powerAmount = source.powerAmount(i, j);
+                int powerWireId = source.powerWireId(i, j);
+                requireUnsigned("powerWireId[" + powerIndex + "]", powerWireId,
+                    MonsterProtocol.POWER_WIRE_ID_BITS);
                 requireSigned("powerAmount[" + powerIndex + "]", powerAmount,
                     MonsterProtocol.POWER_AMOUNT_BITS);
-                result.powerWireId[powerIndex] = MonsterProtocol.UNKNOWN_POWER_WIRE_ID;
+                result.powerWireId[powerIndex] = powerWireId;
                 result.powerAmount[powerIndex] = powerAmount;
                 powerIndex++;
             }
 
-            result.intentWireId[i] = MonsterProtocol.UNKNOWN_INTENT_WIRE_ID;
+            int intentWireId = source.intentWireId(i);
+            requireUnsigned("intentWireId[" + i + "]", intentWireId,
+                MonsterProtocol.INTENT_WIRE_ID_BITS);
+            result.intentWireId[i] = intentWireId;
             if (source.attackIntent(i)) {
                 int damage = source.intentDamage(i);
                 int hitCount = source.multiDamageIntent(i) ? source.intentMultiAmount(i) : 1;
@@ -129,7 +135,11 @@ public final class MonsterColumnsBuilder {
 
         int powerEntryCount(int monsterIndex);
 
+        int powerWireId(int monsterIndex, int powerIndex);
+
         int powerAmount(int monsterIndex, int powerIndex);
+
+        int intentWireId(int monsterIndex);
 
         boolean attackIntent(int monsterIndex);
 
@@ -191,11 +201,24 @@ public final class MonsterColumnsBuilder {
 
         @Override
         public int powerAmount(int monsterIndex, int powerIndex) {
-            AbstractPower power = Objects.requireNonNull(
+            return power(monsterIndex, powerIndex).amount;
+        }
+
+        @Override
+        public int powerWireId(int monsterIndex, int powerIndex) {
+            return MonsterAccess.powerWireId(power(monsterIndex, powerIndex));
+        }
+
+        @Override
+        public int intentWireId(int monsterIndex) {
+            return MonsterAccess.intentWireId(monster(monsterIndex));
+        }
+
+        private AbstractPower power(int monsterIndex, int powerIndex) {
+            return Objects.requireNonNull(
                 powers.get(monsterIndex).get(powerIndex),
                 "powers[" + monsterIndex + "][" + powerIndex + "]"
             );
-            return power.amount;
         }
 
         @Override

@@ -2,7 +2,7 @@ package reallyfastmode.codegen;
 
 import java.nio.file.Paths;
 
-/** Generates the vanilla potion, monster, and relic ID catalogs in one run. */
+/** Generates the vanilla potion, monster, power, and relic ID catalogs in one run. */
 public final class VanillaEntityCatalogGenerator {
     private VanillaEntityCatalogGenerator() {
     }
@@ -18,12 +18,16 @@ public final class VanillaEntityCatalogGenerator {
         int monsterCount = VanillaMonsterCatalogGenerator.generate(Paths.get(
             "src/main/java/reallyfastmode/protocol/VanillaMonsterCatalog.java"
         ));
+        int powerCount = VanillaPowerCatalogGenerator.generate(Paths.get(
+            "src/main/java/reallyfastmode/protocol/VanillaPowerCatalog.java"
+        ));
         int relicCount = VanillaRelicCatalogGenerator.generate(Paths.get(
             "src/main/java/reallyfastmode/protocol/VanillaRelicCatalog.java"
         ));
         System.out.println(
             "Generated vanilla catalogs with " + potionCount + " potions, "
-                + monsterCount + " monsters, and " + relicCount + " relics."
+                + monsterCount + " monsters, " + powerCount + " powers, and "
+                + relicCount + " relics."
         );
     }
 }

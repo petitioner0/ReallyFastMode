@@ -8,10 +8,10 @@ public final class MonsterProtocol {
     /** First value after the fixed vanilla monster catalog range 0-65. */
     public static final int UNKNOWN_MONSTER_WIRE_ID = 66;
 
-    /** Temporary value until the power wire-id catalog is defined. */
-    public static final int UNKNOWN_POWER_WIRE_ID = 0;
+    /** First value after the fixed vanilla power catalog range 0-158. */
+    public static final int UNKNOWN_POWER_WIRE_ID = 159;
 
-    /** Temporary value after the 17 vanilla Intent enum values. */
+    /** First value after the 17 vanilla Intent enum values. */
     public static final int UNKNOWN_INTENT_WIRE_ID = 17;
 
     public static final int MONSTER_COUNT_BITS = 5;
