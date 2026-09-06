@@ -87,13 +87,12 @@ public final class ProtocolSlots {
     /** Slots corresponding to {@code CardAccess}. */
     public static final class DeckCard {
         public static final int CARD_WIRE_ID = 0;
-        public static final int COST_FOR_TURN = 1;
-        public static final int PRICE = 2;
-        public static final int UPGRADED = 3;
-        public static final int IN_BOTTLE_FLAME = 4;
-        public static final int IN_BOTTLE_LIGHTNING = 5;
-        public static final int IN_BOTTLE_TORNADO = 6;
-        public static final int SIZE = 7;
+        public static final int COST = 1;
+        public static final int UPGRADED = 2;
+        public static final int IN_BOTTLE_FLAME = 3;
+        public static final int IN_BOTTLE_LIGHTNING = 4;
+        public static final int IN_BOTTLE_TORNADO = 5;
+        public static final int SIZE = 6;
 
         private DeckCard() {
         }
@@ -102,12 +101,8 @@ public final class ProtocolSlots {
     public static final class HandCard {
         public static final int CARD_WIRE_ID = 0;
         public static final int COST_FOR_TURN = 1;
-        public static final int PRICE = 2;
-        public static final int UPGRADED = 3;
-        public static final int IN_BOTTLE_FLAME = 4;
-        public static final int IN_BOTTLE_LIGHTNING = 5;
-        public static final int IN_BOTTLE_TORNADO = 6;
-        public static final int SIZE = 7;
+        public static final int UPGRADED = 2;
+        public static final int SIZE = 3;
 
         private HandCard() {
         }
@@ -116,12 +111,8 @@ public final class ProtocolSlots {
     public static final class DrawPileCard {
         public static final int CARD_WIRE_ID = 0;
         public static final int COST_FOR_TURN = 1;
-        public static final int PRICE = 2;
-        public static final int UPGRADED = 3;
-        public static final int IN_BOTTLE_FLAME = 4;
-        public static final int IN_BOTTLE_LIGHTNING = 5;
-        public static final int IN_BOTTLE_TORNADO = 6;
-        public static final int SIZE = 7;
+        public static final int UPGRADED = 2;
+        public static final int SIZE = 3;
 
         private DrawPileCard() {
         }
@@ -130,12 +121,8 @@ public final class ProtocolSlots {
     public static final class DiscardPileCard {
         public static final int CARD_WIRE_ID = 0;
         public static final int COST_FOR_TURN = 1;
-        public static final int PRICE = 2;
-        public static final int UPGRADED = 3;
-        public static final int IN_BOTTLE_FLAME = 4;
-        public static final int IN_BOTTLE_LIGHTNING = 5;
-        public static final int IN_BOTTLE_TORNADO = 6;
-        public static final int SIZE = 7;
+        public static final int UPGRADED = 2;
+        public static final int SIZE = 3;
 
         private DiscardPileCard() {
         }
@@ -144,12 +131,8 @@ public final class ProtocolSlots {
     public static final class ExhaustPileCard {
         public static final int CARD_WIRE_ID = 0;
         public static final int COST_FOR_TURN = 1;
-        public static final int PRICE = 2;
-        public static final int UPGRADED = 3;
-        public static final int IN_BOTTLE_FLAME = 4;
-        public static final int IN_BOTTLE_LIGHTNING = 5;
-        public static final int IN_BOTTLE_TORNADO = 6;
-        public static final int SIZE = 7;
+        public static final int UPGRADED = 2;
+        public static final int SIZE = 3;
 
         private ExhaustPileCard() {
         }

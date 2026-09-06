@@ -3,6 +3,7 @@ package reallyfastmode.access;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
+import reallyfastmode.protocol.CardProtocol;
 import reallyfastmode.protocol.VanillaCardCatalog;
 
 import java.util.ArrayList;
@@ -44,7 +45,8 @@ public final class CardAccess {
     }
 
     public static int wireId(AbstractCard card) {
-        return VanillaCardCatalog.cardIdToWireId.get(cardId(card));
+        Integer wireId = VanillaCardCatalog.cardIdToWireId.get(cardId(card));
+        return wireId == null ? CardProtocol.UNKNOWN_CARD_WIRE_ID : wireId;
     }
 
     public static AbstractCard.CardType type(AbstractCard card) {

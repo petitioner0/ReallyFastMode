@@ -69,6 +69,21 @@ List<MapRoomNode> nodes = MapAccess.availableMapNodes();
 - 读取层不生成 JSON 或 packet，不处理 transport，也不决定下一步行动。
 - 所有读取都必须在游戏渲染线程调用；返回的原版对象应当视为只读。
 
+### Card SoA 协议
+
+`CardColumnsBuilder` 使用同一实现捕获 deck 或战斗牌堆，`CardBlockWriter` 根据快照的 layout 写出对应列：
+
+```java
+CardColumns deck = CardColumnsBuilder.buildDeck(CardAccess.masterDeck());
+CardColumns hand = CardColumnsBuilder.buildCombat(CardAccess.hand());
+BitWriter out = new BitWriter(128);
+CardBlockWriter.write(out, deck);
+CardBlockWriter.write(out, hand);
+byte[] blocks = out.toByteArray();
+```
+
+Deck 编码基础 `cost`、升级状态和三个瓶装标志；hand、draw pile、discard pile、exhaust pile 编码 `costForTurn` 和升级状态。空牌堆编码为零数量 block，X 费保持 `-1`，未知卡牌使用 wire ID `432`。精确列顺序和位宽见 [`describe/protocol/card-soa.md`](describe/protocol/card-soa.md)。
+
 ### Monster SoA 协议
 
 `MonsterColumnsBuilder` 将调用方给出的怪物列表捕获为 SoA，`MonsterBlockWriter` 再按固定列顺序写入 MSB-first、big-endian bit stream：

@@ -260,6 +260,7 @@ public final class VanillaCardCatalogGenerator {
                 writer.write("\")");
                 writer.write(wireId + 1 == cards.size() ? ";\n\n" : ",\n");
             }
+            writer.write("    public static final int UNKNOWN_WIRE_ID = values().length;\n");
             writer.write("    public static final Map<String, Integer> cardIdToWireId;\n\n");
             writer.write("    static {\n");
             writer.write("        Map<String, Integer> ids = new LinkedHashMap<String, Integer>();\n");

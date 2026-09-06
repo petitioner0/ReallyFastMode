@@ -439,6 +439,7 @@ public enum VanillaCardCatalog {
     WRITHE(430, "Writhe"),
     ZAP(431, "Zap");
 
+    public static final int UNKNOWN_WIRE_ID = values().length;
     public static final Map<String, Integer> cardIdToWireId;
 
     static {
