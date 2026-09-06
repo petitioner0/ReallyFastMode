@@ -6,7 +6,6 @@ import reallyfastmode.access.MonsterAccess;
 import reallyfastmode.protocol.MonsterProtocol;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -155,17 +154,13 @@ public final class MonsterColumnsBuilder {
         private final List<List<AbstractPower>> powers;
 
         private StsSource(List<AbstractMonster> monsters) {
-            this.monsters = new ArrayList<AbstractMonster>(monsters.size());
+            this.monsters = monsters;
             this.powers = new ArrayList<List<AbstractPower>>(monsters.size());
             for (int i = 0; i < monsters.size(); i++) {
                 AbstractMonster monster = Objects.requireNonNull(
                     monsters.get(i), "monsters[" + i + "]"
                 );
-                this.monsters.add(monster);
-                List<AbstractPower> capturedPowers = MonsterAccess.powers(monster);
-                this.powers.add(capturedPowers.isEmpty()
-                    ? Collections.<AbstractPower>emptyList()
-                    : capturedPowers);
+                this.powers.add(MonsterAccess.powers(monster));
             }
         }
 

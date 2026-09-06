@@ -4,7 +4,6 @@ import com.megacrit.cardcrawl.cards.AbstractCard;
 import reallyfastmode.access.CardAccess;
 import reallyfastmode.protocol.CardProtocol;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -97,9 +96,9 @@ public final class CardColumnsBuilder {
         private final List<AbstractCard> cards;
 
         private StsSource(List<AbstractCard> cards) {
-            this.cards = new ArrayList<AbstractCard>(cards.size());
+            this.cards = cards;
             for (int i = 0; i < cards.size(); i++) {
-                this.cards.add(Objects.requireNonNull(cards.get(i), "cards[" + i + "]"));
+                Objects.requireNonNull(cards.get(i), "cards[" + i + "]");
             }
         }
 
