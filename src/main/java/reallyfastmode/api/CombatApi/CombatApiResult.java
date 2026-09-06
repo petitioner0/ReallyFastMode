@@ -1,4 +1,4 @@
-package reallyfastmode.api;
+package reallyfastmode.api.CombatApi;
 
 /** Immutable result returned by a combat API command. */
 public final class CombatApiResult {

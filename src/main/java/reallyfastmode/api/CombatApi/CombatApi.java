@@ -1,4 +1,4 @@
-package reallyfastmode.api;
+package reallyfastmode.api.CombatApi;
 
 import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.actions.utility.HandCheckAction;

@@ -1,4 +1,4 @@
-package reallyfastmode.api;
+package reallyfastmode.api.CombatApi;
 
 /**
  * Mirrors vanilla card-selection confirmation counts. Confirming zero cards

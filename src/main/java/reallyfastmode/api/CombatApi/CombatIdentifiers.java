@@ -1,4 +1,4 @@
-package reallyfastmode.api;
+package reallyfastmode.api.CombatApi;
 
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
