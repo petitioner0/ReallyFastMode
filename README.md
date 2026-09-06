@@ -46,6 +46,24 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 
 > 战斗 API 会直接读取并修改《杀戮尖塔》的全局状态，因此必须在游戏渲染线程调用。目前项目没有提供 HTTP、WebSocket 或其他外部传输层。
 
+### 整局命令 API
+
+`RunApi` 独立于 `CombatApi`，负责整局生命周期命令。当前可以从主菜单直接启动指定种子和 `RunID` 的铁甲战士普通难度对局：
+
+```java
+RunApiResult result = RunApi.startRun(seed, runId);
+RunApiResult ascensionResult = RunApi.startRun(seed, runId, ascensionLevel);
+```
+
+- 仅当没有正在运行或正在启动的 Run 时接受命令；否则返回 `run_already_active`。
+- 游戏尚未进入可用主菜单状态时返回 `game_not_ready`。
+- 角色固定为铁甲战士；两参数版本关闭进阶，三参数版本开启指定的 `1`–`20` 级进阶，其他值返回 `invalid_ascension_level`。
+- 每日挑战、自定义挑战和无尽模式始终关闭。
+- 跳过主菜单淡出、第一幕标题转场和开局淡入；不会跳过涅奥奖励等会改变玩法结果的交互。
+- 原版 `AbstractDungeon` 会被注入公开的 `int RunID` 字段及 `getRunID()`；同一局跨幕创建的新 dungeon 实例保持相同 `RunID`。
+- 未通过 `RunApi` 启动的对局使用默认 `RunID` `0`。也可通过 `GameAccess.runId()` 读取当前局标识。
+- 与战斗 API 相同，必须在游戏渲染线程调用；命令返回成功表示开局已排入原版下一次游戏更新。
+
 ### 原子状态读取 API
 
 `reallyfastmode.access` 提供只读的游戏状态入口：
@@ -53,6 +71,7 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 ```java
 int hp = PlayerAccess.hp();
 int energy = PlayerAccess.energy();
+int runId = GameAccess.runId();
 List<AbstractCard> hand = CardAccess.hand();
 List<AbstractMonster> monsters = MonsterAccess.monsters();
 int monsterInstanceId = MonsterAccess.instanceId(monsters.get(0));

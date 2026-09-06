@@ -1,8 +1,10 @@
 package reallyfastmode.access;
 
+import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import reallyfastmode.patches.access.RunIdPatches;
 
 /**
  * Reads run-wide state directly from Slay the Spire's current global objects.
@@ -34,6 +36,10 @@ public final class GameAccess {
 
     public static Long seed() {
         return Settings.seed;
+    }
+
+    public static int runId() {
+        return RunIdPatches.runId(CardCrawlGame.dungeon);
     }
 
     public static int ascensionLevel() {

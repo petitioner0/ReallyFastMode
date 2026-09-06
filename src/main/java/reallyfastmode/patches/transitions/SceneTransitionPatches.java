@@ -6,6 +6,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import reallyfastmode.config.FastModeConfig;
+import reallyfastmode.patches.access.RunIdPatches;
 
 public final class SceneTransitionPatches {
     private SceneTransitionPatches() {
@@ -15,8 +16,11 @@ public final class SceneTransitionPatches {
     public static class DungeonFadePatch {
         @SpirePrefixPatch
         public static void finishFadeImmediately(@ByRef float[] ___fadeTimer) {
-            if (!FastModeConfig.isFastModeEnabled()
-                || (!AbstractDungeon.isFadingIn && !AbstractDungeon.isFadingOut)) {
+            if (!AbstractDungeon.isFadingIn && !AbstractDungeon.isFadingOut) {
+                return;
+            }
+            boolean apiStartupFade = RunIdPatches.consumeStartupFadeSkip();
+            if (!FastModeConfig.isFastModeEnabled() && !apiStartupFade) {
                 return;
             }
             // Let vanilla updateFading() run its completion branch and room-transition callback.
