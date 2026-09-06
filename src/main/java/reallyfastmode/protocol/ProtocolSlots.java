@@ -11,6 +11,7 @@ package reallyfastmode.protocol;
 
 
 // TODO(packet-header): Every packet header must contain run_id. Keep run_id
+// out of the Game block and do not allocate a Game slot for it.
 public final class ProtocolSlots {
     public static final int GAME = 0;
     public static final int PLAYER = 1;
@@ -33,7 +34,6 @@ public final class ProtocolSlots {
     private ProtocolSlots() {
     }
 
-    // out of the Game block and do not allocate a Game slot for it.
     /** Slots corresponding to {@code GameAccess}. */
     public static final class Game {
         public static final int ACT = 0;

@@ -88,6 +88,19 @@ List<MapRoomNode> nodes = MapAccess.availableMapNodes();
 - 读取层不生成 JSON 或 packet，不处理 transport，也不决定下一步行动。
 - 所有读取都必须在游戏渲染线程调用；返回的原版对象应当视为只读。
 
+### Game 协议
+
+`GameSnapshotBuilder` 捕获一份当前 Game 标量快照，`GameBlockWriter` 按固定顺序将它直接写入 MSB-first、big-endian bit stream：
+
+```java
+GameSnapshot game = GameSnapshotBuilder.build();
+BitWriter out = new BitWriter(16);
+GameBlockWriter.write(out, game);
+byte[] block = out.toByteArray();
+```
+
+Game block 依次编码 act、floor、进阶等级和三把钥匙，共 17 bit。act 直接读取 `AbstractDungeon.actNum`：原版 `1`–`4` 显式映射为 wire ID `0`–`3`，其他值映射为 UNKNOWN `4`。
+
 ### Card SoA 协议
 
 `CardColumnsBuilder` 使用同一实现捕获 deck 或战斗牌堆，`CardBlockWriter` 根据快照的 layout 写出对应列：
@@ -101,7 +114,7 @@ CardBlockWriter.write(out, hand);
 byte[] blocks = out.toByteArray();
 ```
 
-Deck 编码基础 `cost`、升级状态和三个瓶装标志；hand、draw pile、discard pile、exhaust pile 编码 `costForTurn` 和升级状态。空牌堆编码为零数量 block，X 费保持 `-1`，未知卡牌使用 wire ID `432`。精确列顺序和位宽见 [`describe/protocol/card-soa.md`](describe/protocol/card-soa.md)。
+Deck 编码基础 `cost`、升级状态和三个瓶装标志；hand、draw pile、discard pile、exhaust pile 编码 `costForTurn` 和升级状态。空牌堆编码为零数量 block，X 费保持 `-1`，未知卡牌使用 wire ID `432`。
 
 ### Monster SoA 协议
 
@@ -114,7 +127,7 @@ MonsterBlockWriter.write(out, monsters);
 byte[] block = out.toByteArray();
 ```
 
-捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物；Monster、Power、Intent wire ID 和每列精确位宽记录在 [`describe/protocol/monster-soa.md`](describe/protocol/monster-soa.md)。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
+捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
 
 ## 运行环境
 
