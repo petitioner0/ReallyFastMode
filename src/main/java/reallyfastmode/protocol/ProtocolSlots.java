@@ -206,9 +206,10 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code EventAccess}. */
     public static final class Event {
-        public static final int EVENT = 0;
+        public static final int EVENT_WIRE_ID = 0;
         public static final int OPTIONS = 1;
-        public static final int SIZE = 2;
+        public static final int OPTIONS_APPLICABILITY = 2;
+        public static final int SIZE = 3;
 
         private Event() {
         }
