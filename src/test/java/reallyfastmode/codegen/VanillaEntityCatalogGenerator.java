@@ -2,7 +2,7 @@ package reallyfastmode.codegen;
 
 import java.nio.file.Paths;
 
-/** Generates the vanilla potion, monster, power, and relic ID catalogs in one run. */
+/** Generates all non-card vanilla ID catalogs in one run. */
 public final class VanillaEntityCatalogGenerator {
     private VanillaEntityCatalogGenerator() {
     }
@@ -24,10 +24,13 @@ public final class VanillaEntityCatalogGenerator {
         int relicCount = VanillaRelicCatalogGenerator.generate(Paths.get(
             "src/main/java/reallyfastmode/protocol/VanillaRelicCatalog.java"
         ));
+        int eventCount = VanillaEventCatalogGenerator.generate(Paths.get(
+            "src/main/java/reallyfastmode/protocol/VanillaEventCatalog.java"
+        ));
         System.out.println(
             "Generated vanilla catalogs with " + potionCount + " potions, "
                 + monsterCount + " monsters, " + powerCount + " powers, and "
-                + relicCount + " relics."
+                + relicCount + " relics, and " + eventCount + " events."
         );
     }
 }

@@ -7,6 +7,7 @@ import com.megacrit.cardcrawl.events.RoomEventDialog;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.EventRoom;
 import com.megacrit.cardcrawl.ui.buttons.LargeDialogOptionButton;
+import reallyfastmode.protocol.VanillaEventCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,24 @@ public final class EventAccess {
         return requiredEvent().combatTime;
     }
 
+    public static int wireId() {
+        AbstractEvent event = requiredEvent();
+        try {
+            String eventId = (String) event.getClass().getField("ID").get(null);
+            return VanillaEventCatalog.eventIdToWireId.get(eventId);
+        } catch (NoSuchFieldException exception) {
+            throw new IllegalArgumentException(
+                event.getClass().getName() + " has no public static ID field",
+                exception
+            );
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException(
+                "Cannot read " + event.getClass().getName() + ".ID",
+                exception
+            );
+        }
+    }
+
     public static List<LargeDialogOptionButton> options() {
         AbstractEvent event = event();
         AbstractRoom room = AbstractDungeon.getCurrRoom();
@@ -44,6 +63,10 @@ public final class EventAccess {
     public static int selectedOption() {
         AbstractEvent event = requiredEvent();
         return event.hasDialog ? RoomEventDialog.selectedOption : GenericEventDialog.selectedOption;
+    }
+
+    public static boolean isSelectable(LargeDialogOptionButton option) {
+        return option != null && !option.isDisabled;
     }
 
     private static AbstractEvent requiredEvent() {
