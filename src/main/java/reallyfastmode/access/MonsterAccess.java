@@ -7,6 +7,7 @@ import com.megacrit.cardcrawl.monsters.MonsterGroup;
 import com.megacrit.cardcrawl.powers.AbstractPower;
 import reallyfastmode.patches.access.MonsterInstanceIdPatches;
 import reallyfastmode.patches.access.PrivateFieldAccess;
+import reallyfastmode.protocol.MonsterIntentCatalog;
 import reallyfastmode.protocol.MonsterProtocol;
 import reallyfastmode.protocol.VanillaMonsterCatalog;
 import reallyfastmode.protocol.VanillaPowerCatalog;
@@ -93,10 +94,9 @@ public final class MonsterAccess {
         return monster(monster).intent;
     }
 
-    /** Returns the current Intent enum ordinal, or the fixed unknown id for null. */
+    /** Returns the current Intent's explicit four-bit wire id. */
     public static int intentWireId(AbstractMonster monster) {
-        AbstractMonster.Intent intent = intent(monster);
-        return intent == null ? MonsterProtocol.UNKNOWN_INTENT_WIRE_ID : intent.ordinal();
+        return MonsterIntentCatalog.wireId(intent(monster));
     }
 
     public static List<DamageInfo> damage(AbstractMonster monster) {

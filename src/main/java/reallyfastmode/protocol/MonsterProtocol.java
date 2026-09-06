@@ -11,8 +11,8 @@ public final class MonsterProtocol {
     /** First value after the fixed vanilla power catalog range 0-158. */
     public static final int UNKNOWN_POWER_WIRE_ID = 159;
 
-    /** First value after the 17 vanilla Intent enum values. */
-    public static final int UNKNOWN_INTENT_WIRE_ID = 17;
+    /** DEBUG, vanilla UNKNOWN, and null share the final four-bit value. */
+    public static final int UNKNOWN_INTENT_WIRE_ID = 15;
 
     public static final int MONSTER_COUNT_BITS = 5;
     public static final int INSTANCE_ID_BITS = 4;
@@ -22,7 +22,7 @@ public final class MonsterProtocol {
     public static final int POWER_ENTRY_COUNT_BITS = 5;
     public static final int POWER_WIRE_ID_BITS = 12;
     public static final int POWER_AMOUNT_BITS = 12;
-    public static final int INTENT_WIRE_ID_BITS = 5;
+    public static final int INTENT_WIRE_ID_BITS = 4;
     public static final int INTENT_DAMAGE_BITS = 8;
     public static final int INTENT_MULTI_AMOUNT_BITS = 8;
 

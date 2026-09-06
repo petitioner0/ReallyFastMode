@@ -30,17 +30,17 @@ public class MonsterBlockWriterTest {
         monsters.powerEntryCount[0] = 1;
         monsters.powerWireId[0] = 0;
         monsters.powerAmount[0] = -1;
-        monsters.intentWireId[0] = 17;
+        monsters.intentWireId[0] = 15;
         monsters.intentDamage[0] = 0x7F;
         monsters.intentMultiAmount[0] = 2;
         BitWriter out = new BitWriter(0);
 
         MonsterBlockWriter.write(out, monsters);
 
-        assertEquals(107, out.bitPosition());
+        assertEquals(106, out.bitPosition());
         assertArrayEquals(new byte[]{
             0x0D, 0x21, 0x55, (byte) 0xE6, (byte) 0xF7, (byte) 0x89, 0x1A,
-            0x04, 0x00, 0x3F, (byte) 0xFE, 0x2F, (byte) 0xE0, 0x40
+            0x04, 0x00, 0x3F, (byte) 0xFF, (byte) 0xDF, (byte) 0xC0, (byte) 0x80
         }, out.toByteArray());
     }
 
@@ -95,7 +95,7 @@ public class MonsterBlockWriterTest {
         monsters.hp[0] = 4095;
         monsters.maxHp[0] = 4095;
         monsters.block[0] = 65535;
-        monsters.intentWireId[0] = 31;
+        monsters.intentWireId[0] = 15;
         monsters.intentDamage[0] = 255;
         monsters.intentMultiAmount[0] = 255;
 
@@ -117,6 +117,7 @@ public class MonsterBlockWriterTest {
         assertRejected(column -> column.monsterWireId[0] = 256);
         assertRejected(column -> column.intentDamage[0] = 256);
         assertRejected(column -> column.intentMultiAmount[0] = 256);
+        assertRejected(column -> column.intentWireId[0] = 16);
 
         MonsterColumns lowPower = oneMonster(1);
         lowPower.powerEntryCount[0] = 1;

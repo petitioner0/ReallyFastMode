@@ -2,6 +2,7 @@ package reallyfastmode.protocol.build;
 
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import org.junit.Test;
+import reallyfastmode.protocol.MonsterIntentCatalog;
 import reallyfastmode.protocol.MonsterProtocol;
 import reallyfastmode.protocol.VanillaMonsterCatalog;
 import reallyfastmode.protocol.VanillaPowerCatalog;
@@ -27,7 +28,7 @@ public class MonsterColumnsBuilderTest {
             MonsterProtocol.UNKNOWN_MONSTER_WIRE_ID);
         assertEquals(VanillaPowerCatalog.values().length,
             MonsterProtocol.UNKNOWN_POWER_WIRE_ID);
-        assertEquals(AbstractMonster.Intent.values().length,
+        assertEquals(MonsterIntentCatalog.UNKNOWN.wireId,
             MonsterProtocol.UNKNOWN_INTENT_WIRE_ID);
     }
 
@@ -56,7 +57,7 @@ public class MonsterColumnsBuilderTest {
         assertArrayEquals(new int[]{2, 0}, columns.powerEntryCount);
         assertArrayEquals(new int[]{5, 159}, columns.powerWireId);
         assertArrayEquals(new int[]{2, -1}, columns.powerAmount);
-        assertArrayEquals(new int[]{0, 17}, columns.intentWireId);
+        assertArrayEquals(new int[]{0, 15}, columns.intentWireId);
         assertArrayEquals(new int[]{13, 0}, columns.intentDamage);
         assertArrayEquals(new int[]{1, 0}, columns.intentMultiAmount);
     }
