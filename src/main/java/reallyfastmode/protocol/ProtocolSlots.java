@@ -8,6 +8,9 @@ package reallyfastmode.protocol;
  * provide the required performance characteristics, so concrete slot types use
  * this ordering only as a reference.</p>
  */
+
+
+// TODO(packet-header): Every packet header must contain run_id. Keep run_id
 public final class ProtocolSlots {
     public static final int GAME = 0;
     public static final int PLAYER = 1;
@@ -30,21 +33,16 @@ public final class ProtocolSlots {
     private ProtocolSlots() {
     }
 
+    // out of the Game block and do not allocate a Game slot for it.
     /** Slots corresponding to {@code GameAccess}. */
     public static final class Game {
-        public static final int DUNGEON_ID = 0;
-        public static final int ACT = 1;
-        public static final int FLOOR = 2;
-        public static final int SEED = 3;
-        public static final int ASCENSION_LEVEL = 4;
-        public static final int HAS_RUBY_KEY = 5;
-        public static final int HAS_EMERALD_KEY = 6;
-        public static final int HAS_SAPPHIRE_KEY = 7;
-        public static final int SCREEN = 8;
-        public static final int SCREEN_UP = 9;
-        public static final int ROOM_PHASE = 10;
-        public static final int DUNGEON_BEATEN = 11;
-        public static final int SIZE = 12;
+        public static final int ACT = 0;
+        public static final int FLOOR = 1;
+        public static final int ASCENSION_LEVEL = 2;
+        public static final int HAS_RUBY_KEY = 3;
+        public static final int HAS_EMERALD_KEY = 4;
+        public static final int HAS_SAPPHIRE_KEY = 5;
+        public static final int SIZE = 6;
 
         private Game() {
         }
