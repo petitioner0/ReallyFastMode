@@ -46,6 +46,36 @@ final class AsmVanillaCatalogGenerator {
         String idFieldName,
         String mapFieldName
     ) throws IOException {
+        return generate(
+            loader,
+            packagePath,
+            baseClassName,
+            excludedClassNames,
+            constantFieldName,
+            output,
+            catalogClassName,
+            generatorClassName,
+            idFieldName,
+            mapFieldName,
+            null,
+            null
+        );
+    }
+
+    static int generate(
+        ClassLoader loader,
+        String packagePath,
+        String baseClassName,
+        Set<String> excludedClassNames,
+        String constantFieldName,
+        Path output,
+        String catalogClassName,
+        String generatorClassName,
+        String idFieldName,
+        String mapFieldName,
+        String lookupClassName,
+        String lookupIdFieldName
+    ) throws IOException {
         List<String> ids = discoverIds(
             loader,
             packagePath,
@@ -54,7 +84,16 @@ final class AsmVanillaCatalogGenerator {
             constantFieldName
         );
         validateEnumNames(ids, idFieldName);
-        writeCatalog(output, ids, catalogClassName, generatorClassName, idFieldName, mapFieldName);
+        writeCatalog(
+            output,
+            ids,
+            catalogClassName,
+            generatorClassName,
+            idFieldName,
+            mapFieldName,
+            lookupClassName,
+            lookupIdFieldName
+        );
         return ids.size();
     }
 
@@ -192,7 +231,9 @@ final class AsmVanillaCatalogGenerator {
         String catalogClassName,
         String generatorClassName,
         String idFieldName,
-        String mapFieldName
+        String mapFieldName,
+        String lookupClassName,
+        String lookupIdFieldName
     ) throws IOException {
         Path absoluteOutput = output.toAbsolutePath().normalize();
         Path parent = absoluteOutput.getParent();
@@ -213,7 +254,11 @@ final class AsmVanillaCatalogGenerator {
                 writer.write(escapeJava(id));
                 writer.write(wireId + 1 == ids.size() ? "\");\n\n" : "\"),\n");
             }
-            writer.write("    public static final Map<String, Integer> " + mapFieldName + ";\n\n");
+            writer.write("    public static final Map<String, Integer> " + mapFieldName + ";\n");
+            if (lookupClassName != null) {
+                writer.write("    public static final int UNKNOWN_WIRE_ID = values().length;\n");
+            }
+            writer.write("\n");
             writer.write("    static {\n");
             writer.write("        Map<String, Integer> ids = new LinkedHashMap<String, Integer>();\n");
             writer.write("        for (" + catalogClassName + " value : values()) {\n");
@@ -221,6 +266,15 @@ final class AsmVanillaCatalogGenerator {
             writer.write("        }\n");
             writer.write("        " + mapFieldName + " = Collections.unmodifiableMap(ids);\n");
             writer.write("    }\n\n");
+            if (lookupClassName != null) {
+                writer.write("    public static int wireId(" + lookupClassName + " value) {\n");
+                writer.write("        " + lookupClassName
+                    + " checkedValue = java.util.Objects.requireNonNull(value, \"value\");\n");
+                writer.write("        Integer wireId = " + mapFieldName
+                    + ".get(checkedValue." + lookupIdFieldName + ");\n");
+                writer.write("        return wireId == null ? UNKNOWN_WIRE_ID : wireId;\n");
+                writer.write("    }\n\n");
+            }
             writer.write("    public final int wireId;\n");
             writer.write("    public final String " + idFieldName + ";\n\n");
             writer.write("    " + catalogClassName + "(int wireId, String " + idFieldName + ") {\n");

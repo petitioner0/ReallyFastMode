@@ -30,7 +30,9 @@ public final class VanillaPowerCatalogGenerator {
             "VanillaPowerCatalog",
             "VanillaPowerCatalogGenerator",
             "powerId",
-            "powerIdToWireId"
+            "powerIdToWireId",
+            "com.megacrit.cardcrawl.powers.AbstractPower",
+            "ID"
         );
     }
 }

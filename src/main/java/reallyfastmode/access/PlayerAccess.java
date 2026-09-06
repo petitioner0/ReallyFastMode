@@ -7,7 +7,6 @@ import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.stances.AbstractStance;
 import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
-import reallyfastmode.protocol.MonsterProtocol;
 import reallyfastmode.protocol.VanillaPowerCatalog;
 
 import java.util.ArrayList;
@@ -82,11 +81,9 @@ public final class PlayerAccess {
             : immutableCopy(AbstractDungeon.player.powers);
     }
 
-    /** Returns the vanilla power wire id, or the protocol's fixed unknown id. */
+    /** Returns the vanilla power wire id, or the catalog's fixed unknown id. */
     public static int powerWireId(AbstractPower power) {
-        AbstractPower checkedPower = Objects.requireNonNull(power, "power");
-        Integer wireId = VanillaPowerCatalog.powerIdToWireId.get(checkedPower.ID);
-        return wireId == null ? MonsterProtocol.UNKNOWN_POWER_WIRE_ID : wireId;
+        return VanillaPowerCatalog.wireId(power);
     }
 
     public static List<AbstractRelic> relics() {

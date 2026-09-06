@@ -81,9 +81,7 @@ public final class MonsterAccess {
 
     /** Returns the vanilla power wire id, or the protocol's fixed unknown id. */
     public static int powerWireId(AbstractPower power) {
-        AbstractPower checkedPower = Objects.requireNonNull(power, "power");
-        Integer wireId = VanillaPowerCatalog.powerIdToWireId.get(checkedPower.ID);
-        return wireId == null ? MonsterProtocol.UNKNOWN_POWER_WIRE_ID : wireId;
+        return VanillaPowerCatalog.wireId(power);
     }
 
     public static AbstractMonster.EnemyType type(AbstractMonster monster) {

@@ -167,6 +167,7 @@ public enum VanillaPowerCatalog {
     WRATHNEXTTURNPOWER(158, "WrathNextTurnPower");
 
     public static final Map<String, Integer> powerIdToWireId;
+    public static final int UNKNOWN_WIRE_ID = values().length;
 
     static {
         Map<String, Integer> ids = new LinkedHashMap<String, Integer>();
@@ -174,6 +175,12 @@ public enum VanillaPowerCatalog {
             ids.put(value.powerId, value.wireId);
         }
         powerIdToWireId = Collections.unmodifiableMap(ids);
+    }
+
+    public static int wireId(com.megacrit.cardcrawl.powers.AbstractPower value) {
+        com.megacrit.cardcrawl.powers.AbstractPower checkedValue = java.util.Objects.requireNonNull(value, "value");
+        Integer wireId = powerIdToWireId.get(checkedValue.ID);
+        return wireId == null ? UNKNOWN_WIRE_ID : wireId;
     }
 
     public final int wireId;

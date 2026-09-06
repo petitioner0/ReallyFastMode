@@ -27,9 +27,7 @@ public class MonsterColumnsBuilderTest {
         assertEquals(VanillaMonsterCatalog.values().length,
             MonsterProtocol.UNKNOWN_MONSTER_WIRE_ID);
         assertEquals(VanillaPowerCatalog.values().length,
-            MonsterProtocol.UNKNOWN_POWER_WIRE_ID);
-        assertEquals(MonsterIntentCatalog.UNKNOWN.wireId,
-            MonsterProtocol.UNKNOWN_INTENT_WIRE_ID);
+            VanillaPowerCatalog.UNKNOWN_WIRE_ID);
     }
 
     @Test
@@ -40,9 +38,9 @@ public class MonsterColumnsBuilderTest {
         source.hp = new int[]{40, 0};
         source.maxHp = new int[]{50, 4095};
         source.block = new int[]{12, 0};
-        source.powerWireId = new int[][]{{5, MonsterProtocol.UNKNOWN_POWER_WIRE_ID}, {}};
+        source.powerWireId = new int[][]{{5, VanillaPowerCatalog.UNKNOWN_WIRE_ID}, {}};
         source.powerAmount = new int[][]{{2, -1}, {}};
-        source.intentWireId = new int[]{0, MonsterProtocol.UNKNOWN_INTENT_WIRE_ID};
+        source.intentWireId = new int[]{0, MonsterIntentCatalog.UNKNOWN.wireId};
         source.attack = new boolean[]{true, false};
         source.intentDamage = new int[]{13, -1};
         source.multi = new boolean[]{false, false};
