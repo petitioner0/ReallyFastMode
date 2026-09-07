@@ -57,11 +57,13 @@ public final class ProtocolSlots {
         public static final int GOLD = 4;
         public static final int MAX_ORBS = 5;
         public static final int ORBS_WIRE_ID = 6;
-        public static final int POWERS_WIRE_ID = 7;
-        public static final int POWER_COUNTS = 8;
-        public static final int RELICS_WIRE_ID = 9;
-        public static final int RELICS_COUNT = 10;
-        public static final int SIZE = 11;
+        public static final int POWER_ENTRY_COUNT = 7;
+        public static final int POWERS_WIRE_ID = 8;
+        public static final int POWER_COUNTS = 9;
+        public static final int RELIC_ENTRY_COUNT = 10;
+        public static final int RELICS_WIRE_ID = 11;
+        public static final int RELICS_COUNT = 12;
+        public static final int SIZE = 13;
 
         private Player() {
         }

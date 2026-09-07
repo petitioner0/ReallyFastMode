@@ -46,6 +46,8 @@ public class PlayerBlockWriterTest {
         offset += 3;
         assertEquals(1, readBits(bytes, offset, 3));
         offset += 3;
+        assertEquals(2, readBits(bytes, offset, 5));
+        offset += 5;
         assertEquals(5, readBits(bytes, offset, 8));
         offset += 8;
         assertEquals(159, readBits(bytes, offset, 8));
@@ -54,6 +56,8 @@ public class PlayerBlockWriterTest {
         offset += 12;
         assertEquals(0xFFF, readBits(bytes, offset, 12));
         offset += 12;
+        assertEquals(2, readBits(bytes, offset, 8));
+        offset += 8;
         assertEquals(0, readBits(bytes, offset, 8));
         offset += 8;
         assertEquals(190, readBits(bytes, offset, 8));
@@ -66,13 +70,15 @@ public class PlayerBlockWriterTest {
     }
 
     @Test
-    public void writesOnlyFixedScalarsWhenVariableSectionsAreEmpty() {
+    public void writesZeroEntryCountsWhenVariableSectionsAreEmpty() {
         PlayerSnapshot player = new PlayerSnapshot(0, 0, 0, 0, 0, 0, 0, 0);
         BitWriter out = new BitWriter(0);
 
         PlayerBlockWriter.write(out, player);
 
-        assertEquals(PlayerProtocol.FIXED_SCALAR_BITS, out.bitPosition());
+        assertEquals(PlayerProtocol.FIXED_SCALAR_BITS
+            + PlayerProtocol.POWER_ENTRY_COUNT_BITS
+            + PlayerProtocol.RELIC_ENTRY_COUNT_BITS, out.bitPosition());
     }
 
     @Test
@@ -96,6 +102,13 @@ public class PlayerBlockWriterTest {
         player.relicWireId[1] = 255;
         player.relicCounts[0] = -1;
         player.relicCounts[1] = 255;
+
+        PlayerBlockWriter.write(new BitWriter(0), player);
+    }
+
+    @Test
+    public void acceptsMaximumEntryCounts() {
+        PlayerSnapshot player = new PlayerSnapshot(0, 0, 0, 0, 0, 0, 31, 255);
 
         PlayerBlockWriter.write(new BitWriter(0), player);
     }
@@ -126,6 +139,9 @@ public class PlayerBlockWriterTest {
         PlayerSnapshot invalidRelic = new PlayerSnapshot(0, 0, 0, 0, 0, 0, 0, 1);
         invalidRelic.relicCounts[0] = 256;
         assertRejected(invalidRelic);
+
+        assertRejected(new PlayerSnapshot(0, 0, 0, 0, 0, 0, 32, 0));
+        assertRejected(new PlayerSnapshot(0, 0, 0, 0, 0, 0, 0, 256));
 
         assertThrows(IllegalArgumentException.class,
             () -> new PlayerSnapshot(0, 0, 0, 0, 0, -1, 0, 0));

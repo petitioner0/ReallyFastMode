@@ -25,6 +25,7 @@ public final class PlayerBlockWriter {
             out.writeBits(player.orbWireId[i], PlayerProtocol.ORB_WIRE_ID_BITS);
         }
 
+        out.writeBits(player.powerWireId.length, PlayerProtocol.POWER_ENTRY_COUNT_BITS);
         for (int i = 0; i < player.powerWireId.length; i++) {
             out.writeBits(player.powerWireId[i], PlayerProtocol.POWER_WIRE_ID_BITS);
         }
@@ -32,6 +33,7 @@ public final class PlayerBlockWriter {
             out.writeBits(player.powerCounts[i], PlayerProtocol.POWER_COUNT_BITS);
         }
 
+        out.writeBits(player.relicWireId.length, PlayerProtocol.RELIC_ENTRY_COUNT_BITS);
         for (int i = 0; i < player.relicWireId.length; i++) {
             out.writeBits(player.relicWireId[i], PlayerProtocol.RELIC_WIRE_ID_BITS);
         }
@@ -58,6 +60,10 @@ public final class PlayerBlockWriter {
             "powerCounts", player.powerCounts);
         requireSameLength("relicWireId", player.relicWireId,
             "relicCounts", player.relicCounts);
+        requireUnsigned("powerEntryCount", player.powerWireId.length,
+            PlayerProtocol.POWER_ENTRY_COUNT_BITS);
+        requireUnsigned("relicEntryCount", player.relicWireId.length,
+            PlayerProtocol.RELIC_ENTRY_COUNT_BITS);
 
         for (int i = 0; i < player.maxOrbs; i++) {
             requireUnsigned("orbWireId[" + i + "]", player.orbWireId[i],

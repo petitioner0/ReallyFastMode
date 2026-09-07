@@ -112,7 +112,7 @@ PlayerBlockWriter.write(out, player);
 byte[] block = out.toByteArray();
 ```
 
-`maxOrbs` 直接指定 Orb wire ID 列长度；Power 和 Relic 数组使用自身长度，不写入独立 entry count，对应 count 列与其 ID 列等长。Relic count 使用 8-bit unsigned，原版负数哨兵统一编码为 0。未知或 Mod Orb、Power、Relic 使用各自原版目录的尾值。
+`maxOrbs` 直接指定 Orb wire ID 列长度；Power 和 Relic 分别先写入 5-bit 和 8-bit entry count，对应 count 列与其 ID 列等长。Relic count 使用 8-bit unsigned，原版负数哨兵统一编码为 0。未知或 Mod Orb、Power、Relic 使用各自原版目录的尾值。
 
 ### Combat 协议
 
@@ -167,6 +167,19 @@ byte[] block = out.toByteArray();
 ```
 
 捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
+
+### 零拷贝 packet 输出
+
+packet 层能够预先计算最终字节数时，应当先分配最终数组，再让 `BitWriter` 直接写入该数组：
+
+```java
+byte[] packet = new byte[packetByteSize];
+BitWriter out = BitWriter.wrap(packet);
+// 依次写入 header 和 blocks
+// 写完后直接发送 packet，不调用 toByteArray()
+```
+
+`wrap` 使用固定容量且不会替换底层数组；写出容量会在该次写入修改数组前抛出异常。目标数组必须是新建或已清零的数组。只有最终长度未知的场景才使用 growable constructor 和 `toByteArray()`。
 
 ## 运行环境
 

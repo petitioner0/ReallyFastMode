@@ -18,8 +18,10 @@ public final class PlayerProtocol {
     public static final int GOLD_BITS = 12;
     public static final int MAX_ORBS_BITS = 4;
     public static final int ORB_WIRE_ID_BITS = 3;
+    public static final int POWER_ENTRY_COUNT_BITS = 5;
     public static final int POWER_WIRE_ID_BITS = 8;
     public static final int POWER_COUNT_BITS = 12;
+    public static final int RELIC_ENTRY_COUNT_BITS = 8;
     public static final int RELIC_WIRE_ID_BITS = 8;
     public static final int RELIC_COUNT_BITS = 8;
 

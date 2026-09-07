@@ -47,8 +47,10 @@ public final class PlayerSnapshotBuilder {
                 "orbWireId length=" + orbSize + " but maxOrbs=" + maxOrbs
             );
         }
-        requireSize("powerSize", powerSize);
-        requireSize("relicSize", relicSize);
+        requireUnsigned("powerSize", powerSize,
+            PlayerProtocol.POWER_ENTRY_COUNT_BITS);
+        requireUnsigned("relicSize", relicSize,
+            PlayerProtocol.RELIC_ENTRY_COUNT_BITS);
 
         PlayerSnapshot result = new PlayerSnapshot(
             hp,
@@ -88,12 +90,6 @@ public final class PlayerSnapshotBuilder {
             result.relicCounts[i] = count;
         }
         return result;
-    }
-
-    private static void requireSize(String name, int value) {
-        if (value < 0) {
-            throw new IllegalArgumentException(name + "=" + value);
-        }
     }
 
     private static void requireUnsigned(String name, int value, int bits) {

@@ -126,6 +126,18 @@ public class PlayerSnapshotBuilderTest {
         highRelicCount.relicCounts = new int[]{256};
         assertThrows(IllegalArgumentException.class,
             () -> PlayerSnapshotBuilder.buildFromSource(highRelicCount));
+
+        FakeSource tooManyPowers = new FakeSource();
+        tooManyPowers.powerWireId = new int[32];
+        tooManyPowers.powerCounts = new int[32];
+        assertThrows(IllegalArgumentException.class,
+            () -> PlayerSnapshotBuilder.buildFromSource(tooManyPowers));
+
+        FakeSource tooManyRelics = new FakeSource();
+        tooManyRelics.relicWireId = new int[256];
+        tooManyRelics.relicCounts = new int[256];
+        assertThrows(IllegalArgumentException.class,
+            () -> PlayerSnapshotBuilder.buildFromSource(tooManyRelics));
     }
 
     private static final class FakeSource implements PlayerSnapshotBuilder.Source {
