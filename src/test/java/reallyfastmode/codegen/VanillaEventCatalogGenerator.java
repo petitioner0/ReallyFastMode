@@ -7,7 +7,7 @@ import java.util.Collections;
 /** One-shot generator for {@code VanillaEventCatalog}. */
 public final class VanillaEventCatalogGenerator {
     private static final Path DEFAULT_OUTPUT = Paths.get(
-        "src/main/java/reallyfastmode/protocol/VanillaEventCatalog.java"
+        "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaEventCatalog.java"
     );
 
     private VanillaEventCatalogGenerator() {

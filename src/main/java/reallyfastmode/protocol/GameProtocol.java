@@ -1,5 +1,7 @@
 package reallyfastmode.protocol;
 
+import reallyfastmode.protocol.VanillaCatalog.VanillaActCatalog;
+
 /** Fixed constants for the scalar Game wire layout. */
 public final class GameProtocol {
     public static final int ACT_BITS = 3;

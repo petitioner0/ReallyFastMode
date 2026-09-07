@@ -1,4 +1,4 @@
-package reallyfastmode.protocol;
+package reallyfastmode.protocol.VanillaCatalog;
 
 /** Explicit three-bit wire mapping for the four vanilla act numbers. */
 public enum VanillaActCatalog {

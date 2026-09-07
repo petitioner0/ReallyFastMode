@@ -36,7 +36,7 @@ import java.util.jar.JarFile;
 public final class VanillaCardCatalogGenerator {
     private static final String CARD_PACKAGE_PATH = "com/megacrit/cardcrawl/cards/";
     private static final Path DEFAULT_OUTPUT = Paths.get(
-        "src/main/java/reallyfastmode/protocol/VanillaCardCatalog.java"
+        "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaCardCatalog.java"
     );
 
     private VanillaCardCatalogGenerator() {

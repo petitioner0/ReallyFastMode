@@ -7,7 +7,8 @@ import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.stances.AbstractStance;
 import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
-import reallyfastmode.protocol.VanillaPowerCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaOrbCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaPowerCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,6 +101,13 @@ public final class PlayerAccess {
         return AbstractDungeon.player == null
             ? Collections.<AbstractOrb>emptyList()
             : immutableCopy(AbstractDungeon.player.orbs);
+    }
+
+    /** Returns the vanilla orb wire id, or the catalog's fixed unknown id. */
+    public static int orbWireId(AbstractOrb orb) {
+        AbstractOrb checkedOrb = Objects.requireNonNull(orb, "orb");
+        Integer wireId = VanillaOrbCatalog.orbIdToWireId.get(checkedOrb.ID);
+        return wireId == null ? VanillaOrbCatalog.UNKNOWN_WIRE_ID : wireId;
     }
 
     public static AbstractStance stance() {

@@ -1,4 +1,4 @@
-package reallyfastmode.protocol;
+package reallyfastmode.protocol.VanillaCatalog;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

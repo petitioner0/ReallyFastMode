@@ -4,8 +4,8 @@ import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import org.junit.Test;
 import reallyfastmode.protocol.MonsterIntentCatalog;
 import reallyfastmode.protocol.MonsterProtocol;
-import reallyfastmode.protocol.VanillaMonsterCatalog;
-import reallyfastmode.protocol.VanillaPowerCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaMonsterCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaPowerCatalog;
 
 import java.util.Collections;
 

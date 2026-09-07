@@ -1,7 +1,7 @@
 package reallyfastmode.protocol.build;
 
 import org.junit.Test;
-import reallyfastmode.protocol.VanillaActCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaActCatalog;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

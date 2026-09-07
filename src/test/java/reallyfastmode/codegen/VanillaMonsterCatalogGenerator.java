@@ -7,7 +7,7 @@ import java.util.Collections;
 /** One-shot generator for {@code VanillaMonsterCatalog}. */
 public final class VanillaMonsterCatalogGenerator {
     private static final Path DEFAULT_OUTPUT = Paths.get(
-        "src/main/java/reallyfastmode/protocol/VanillaMonsterCatalog.java"
+        "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaMonsterCatalog.java"
     );
 
     private VanillaMonsterCatalogGenerator() {

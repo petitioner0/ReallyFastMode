@@ -7,7 +7,7 @@ import com.megacrit.cardcrawl.events.RoomEventDialog;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.EventRoom;
 import com.megacrit.cardcrawl.ui.buttons.LargeDialogOptionButton;
-import reallyfastmode.protocol.VanillaEventCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaEventCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;

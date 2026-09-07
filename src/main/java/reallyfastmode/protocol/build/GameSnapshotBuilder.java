@@ -2,7 +2,7 @@ package reallyfastmode.protocol.build;
 
 import reallyfastmode.access.GameAccess;
 import reallyfastmode.protocol.GameProtocol;
-import reallyfastmode.protocol.VanillaActCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaActCatalog;
 
 import java.util.Objects;
 

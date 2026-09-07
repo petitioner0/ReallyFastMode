@@ -3,7 +3,7 @@ package reallyfastmode.protocol.build;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import org.junit.Test;
 import reallyfastmode.protocol.CardProtocol;
-import reallyfastmode.protocol.VanillaCardCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaCardCatalog;
 
 import java.util.Collections;
 

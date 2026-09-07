@@ -1,5 +1,7 @@
 package reallyfastmode.protocol;
 
+import reallyfastmode.protocol.VanillaCatalog.VanillaCardCatalog;
+
 /** Fixed constants for the Card SoA wire layouts. */
 public final class CardProtocol {
     public static final int MAX_CARDS = 255;

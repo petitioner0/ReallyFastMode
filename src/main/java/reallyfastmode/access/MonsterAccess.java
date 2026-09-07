@@ -9,8 +9,8 @@ import reallyfastmode.patches.access.MonsterInstanceIdPatches;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 import reallyfastmode.protocol.MonsterIntentCatalog;
 import reallyfastmode.protocol.MonsterProtocol;
-import reallyfastmode.protocol.VanillaMonsterCatalog;
-import reallyfastmode.protocol.VanillaPowerCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaMonsterCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaPowerCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;

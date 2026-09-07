@@ -4,7 +4,7 @@ import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import reallyfastmode.protocol.CardProtocol;
-import reallyfastmode.protocol.VanillaCardCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaCardCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;

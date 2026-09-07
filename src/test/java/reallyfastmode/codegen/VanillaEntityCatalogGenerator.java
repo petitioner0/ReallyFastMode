@@ -13,19 +13,19 @@ public final class VanillaEntityCatalogGenerator {
         }
 
         int potionCount = VanillaPotionCatalogGenerator.generate(Paths.get(
-            "src/main/java/reallyfastmode/protocol/VanillaPotionCatalog.java"
+            "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaPotionCatalog.java"
         ));
         int monsterCount = VanillaMonsterCatalogGenerator.generate(Paths.get(
-            "src/main/java/reallyfastmode/protocol/VanillaMonsterCatalog.java"
+            "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaMonsterCatalog.java"
         ));
         int powerCount = VanillaPowerCatalogGenerator.generate(Paths.get(
-            "src/main/java/reallyfastmode/protocol/VanillaPowerCatalog.java"
+            "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaPowerCatalog.java"
         ));
         int relicCount = VanillaRelicCatalogGenerator.generate(Paths.get(
-            "src/main/java/reallyfastmode/protocol/VanillaRelicCatalog.java"
+            "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaRelicCatalog.java"
         ));
         int eventCount = VanillaEventCatalogGenerator.generate(Paths.get(
-            "src/main/java/reallyfastmode/protocol/VanillaEventCatalog.java"
+            "src/main/java/reallyfastmode/protocol/VanillaCatalog/VanillaEventCatalog.java"
         ));
         System.out.println(
             "Generated vanilla catalogs with " + potionCount + " potions, "

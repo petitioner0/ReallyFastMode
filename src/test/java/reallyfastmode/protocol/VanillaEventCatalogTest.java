@@ -1,6 +1,7 @@
 package reallyfastmode.protocol;
 
 import org.junit.Test;
+import reallyfastmode.protocol.VanillaCatalog.VanillaEventCatalog;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;

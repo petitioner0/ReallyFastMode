@@ -3,7 +3,7 @@ package reallyfastmode.access;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.potions.PotionSlot;
-import reallyfastmode.protocol.VanillaPotionCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaPotionCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
