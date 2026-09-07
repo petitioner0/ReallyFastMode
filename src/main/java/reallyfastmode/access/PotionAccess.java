@@ -37,7 +37,12 @@ public final class PotionAccess {
     }
 
     public static int wireId(AbstractPotion potion) {
-        return VanillaPotionCatalog.potionIdToWireId.get(potion(potion).ID);
+        AbstractPotion checkedPotion = potion(potion);
+        if (checkedPotion instanceof PotionSlot) {
+            return VanillaPotionCatalog.EMPTY.wireId;
+        }
+        Integer wireId = VanillaPotionCatalog.potionIdToWireId.get(checkedPotion.ID);
+        return wireId == null ? VanillaPotionCatalog.UNKNOWN.wireId : wireId;
     }
 
     public static int slot(AbstractPotion potion) {

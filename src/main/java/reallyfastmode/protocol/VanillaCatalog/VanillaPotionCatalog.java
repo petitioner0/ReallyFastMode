@@ -48,7 +48,9 @@ public enum VanillaPotionCatalog {
     STEROIDPOTION(39, "SteroidPotion"),
     STRENGTH_POTION(40, "Strength Potion"),
     SWIFT_POTION(41, "Swift Potion"),
-    WEAK_POTION(42, "Weak Potion");
+    WEAK_POTION(42, "Weak Potion"),
+    EMPTY(43, "Empty"),
+    UNKNOWN(44, "Unknown");
 
     public static final Map<String, Integer> potionIdToWireId;
 

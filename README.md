@@ -114,6 +114,32 @@ byte[] block = out.toByteArray();
 
 `maxOrbs` 直接指定 Orb wire ID 列长度；Power 和 Relic 数组使用自身长度，不写入独立 entry count，对应 count 列与其 ID 列等长。Relic count 使用 8-bit unsigned，原版负数哨兵统一编码为 0。未知或 Mod Orb、Power、Relic 使用各自原版目录的尾值。
 
+### Combat 协议
+
+`CombatSnapshotBuilder` 捕获当前 `GameActionManager.turn`，`CombatBlockWriter` 将其编码为一个 8-bit unsigned 值：
+
+```java
+CombatSnapshot combat = CombatSnapshotBuilder.build();
+BitWriter out = new BitWriter(1);
+CombatBlockWriter.write(out, combat);
+byte[] block = out.toByteArray();
+```
+
+Combat block 固定为 8 bit，允许回合数 `0–255`。
+
+### Potion 协议
+
+`PotionSnapshotBuilder` 从 `PlayerAccess.potionSlots()` 获取玩家当前药水槽位总数，并捕获每个槽位的 Potion wire ID：
+
+```java
+PotionSnapshot potions = PotionSnapshotBuilder.build();
+BitWriter out = new BitWriter(8);
+PotionBlockWriter.write(out, potions);
+byte[] block = out.toByteArray();
+```
+
+槽位数使用 3-bit，每个 Potion wire ID 使用 6-bit。原版目录为 `0–42`，空槽固定为 `43`，未知或 Mod Potion 固定为 `44`。
+
 ### Card SoA 协议
 
 `CardColumnsBuilder` 使用同一实现捕获 deck 或战斗牌堆，`CardBlockWriter` 根据快照的 layout 写出对应列：

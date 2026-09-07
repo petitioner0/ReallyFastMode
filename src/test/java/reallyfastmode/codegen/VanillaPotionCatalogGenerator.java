@@ -2,6 +2,7 @@ package reallyfastmode.codegen;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 
 /** One-shot generator for {@code VanillaPotionCatalog}. */
@@ -30,7 +31,8 @@ public final class VanillaPotionCatalogGenerator {
             "VanillaPotionCatalog",
             "VanillaPotionCatalogGenerator",
             "potionId",
-            "potionIdToWireId"
+            "potionIdToWireId",
+            Arrays.asList("Empty", "Unknown")
         );
     }
 }

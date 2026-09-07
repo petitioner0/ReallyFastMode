@@ -57,6 +57,37 @@ final class AsmVanillaCatalogGenerator {
             generatorClassName,
             idFieldName,
             mapFieldName,
+            Collections.<String>emptyList(),
+            null,
+            null
+        );
+    }
+
+    static int generate(
+        ClassLoader loader,
+        String packagePath,
+        String baseClassName,
+        Set<String> excludedClassNames,
+        String constantFieldName,
+        Path output,
+        String catalogClassName,
+        String generatorClassName,
+        String idFieldName,
+        String mapFieldName,
+        List<String> trailingIds
+    ) throws IOException {
+        return generate(
+            loader,
+            packagePath,
+            baseClassName,
+            excludedClassNames,
+            constantFieldName,
+            output,
+            catalogClassName,
+            generatorClassName,
+            idFieldName,
+            mapFieldName,
+            trailingIds,
             null,
             null
         );
@@ -76,6 +107,38 @@ final class AsmVanillaCatalogGenerator {
         String lookupClassName,
         String lookupIdFieldName
     ) throws IOException {
+        return generate(
+            loader,
+            packagePath,
+            baseClassName,
+            excludedClassNames,
+            constantFieldName,
+            output,
+            catalogClassName,
+            generatorClassName,
+            idFieldName,
+            mapFieldName,
+            Collections.<String>emptyList(),
+            lookupClassName,
+            lookupIdFieldName
+        );
+    }
+
+    private static int generate(
+        ClassLoader loader,
+        String packagePath,
+        String baseClassName,
+        Set<String> excludedClassNames,
+        String constantFieldName,
+        Path output,
+        String catalogClassName,
+        String generatorClassName,
+        String idFieldName,
+        String mapFieldName,
+        List<String> trailingIds,
+        String lookupClassName,
+        String lookupIdFieldName
+    ) throws IOException {
         List<String> ids = discoverIds(
             loader,
             packagePath,
@@ -83,6 +146,7 @@ final class AsmVanillaCatalogGenerator {
             excludedClassNames,
             constantFieldName
         );
+        appendTrailingIds(ids, trailingIds, idFieldName);
         validateEnumNames(ids, idFieldName);
         writeCatalog(
             output,
@@ -95,6 +159,26 @@ final class AsmVanillaCatalogGenerator {
             lookupIdFieldName
         );
         return ids.size();
+    }
+
+    private static void appendTrailingIds(
+        List<String> ids,
+        List<String> trailingIds,
+        String idFieldName
+    ) {
+        if (trailingIds == null) {
+            throw new NullPointerException("trailingIds");
+        }
+        Set<String> seen = new HashSet<String>(ids);
+        for (String id : trailingIds) {
+            if (id == null || id.isEmpty()) {
+                throw new IllegalArgumentException(idFieldName + " trailing ID is empty");
+            }
+            if (!seen.add(id)) {
+                throw new IllegalArgumentException("duplicate trailing ID '" + id + "'");
+            }
+            ids.add(id);
+        }
     }
 
     private static List<String> discoverIds(
@@ -242,7 +326,7 @@ final class AsmVanillaCatalogGenerator {
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(absoluteOutput, StandardCharsets.UTF_8)) {
-            writer.write("package reallyfastmode.protocol;\n\n");
+            writer.write("package reallyfastmode.protocol.VanillaCatalog;\n\n");
             writer.write("import java.util.Collections;\n");
             writer.write("import java.util.LinkedHashMap;\n");
             writer.write("import java.util.Map;\n\n");
