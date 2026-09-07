@@ -101,6 +101,19 @@ byte[] block = out.toByteArray();
 
 Game block 依次编码 act、floor、进阶等级和三把钥匙，共 17 bit。act 直接读取 `AbstractDungeon.actNum`：原版 `1`–`4` 显式映射为 wire ID `0`–`3`，其他值映射为 UNKNOWN `4`。
 
+### Player 协议
+
+`PlayerSnapshotBuilder` 捕获玩家标量状态以及 Orb、Power、Relic 变长列，`PlayerBlockWriter` 按 `ProtocolSlots.Player` 的顺序编码：
+
+```java
+PlayerSnapshot player = PlayerSnapshotBuilder.build();
+BitWriter out = new BitWriter(64);
+PlayerBlockWriter.write(out, player);
+byte[] block = out.toByteArray();
+```
+
+`maxOrbs` 直接指定 Orb wire ID 列长度；Power 和 Relic 数组使用自身长度，不写入独立 entry count，对应 count 列与其 ID 列等长。Relic count 使用 8-bit unsigned，原版负数哨兵统一编码为 0。未知或 Mod Orb、Power、Relic 使用各自原版目录的尾值。
+
 ### Card SoA 协议
 
 `CardColumnsBuilder` 使用同一实现捕获 deck 或战斗牌堆，`CardBlockWriter` 根据快照的 layout 写出对应列：

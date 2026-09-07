@@ -14,7 +14,7 @@ public final class MonsterProtocol {
     public static final int HP_BITS = 12;
     public static final int BLOCK_BITS = 16;
     public static final int POWER_ENTRY_COUNT_BITS = 5;
-    public static final int POWER_WIRE_ID_BITS = 12;
+    public static final int POWER_WIRE_ID_BITS = 8;
     public static final int POWER_AMOUNT_BITS = 12;
     public static final int INTENT_WIRE_ID_BITS = 4;
     public static final int INTENT_DAMAGE_BITS = 8;

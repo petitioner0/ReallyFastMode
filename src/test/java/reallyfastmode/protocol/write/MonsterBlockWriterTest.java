@@ -37,10 +37,10 @@ public class MonsterBlockWriterTest {
 
         MonsterBlockWriter.write(out, monsters);
 
-        assertEquals(106, out.bitPosition());
+        assertEquals(102, out.bitPosition());
         assertArrayEquals(new byte[]{
             0x0D, 0x21, 0x55, (byte) 0xE6, (byte) 0xF7, (byte) 0x89, 0x1A,
-            0x04, 0x00, 0x3F, (byte) 0xFF, (byte) 0xDF, (byte) 0xC0, (byte) 0x80
+            0x04, 0x03, (byte) 0xFF, (byte) 0xFD, (byte) 0xFC, 0x08
         }, out.toByteArray());
     }
 
@@ -75,12 +75,12 @@ public class MonsterBlockWriterTest {
         offset += 5;
         assertEquals(2, readBits(bytes, offset, 5));
         offset += 5;
-        assertEquals(11, readBits(bytes, offset, 12));
-        offset += 12;
-        assertEquals(22, readBits(bytes, offset, 12));
-        offset += 12;
-        assertEquals(33, readBits(bytes, offset, 12));
-        offset += 12;
+        assertEquals(11, readBits(bytes, offset, 8));
+        offset += 8;
+        assertEquals(22, readBits(bytes, offset, 8));
+        offset += 8;
+        assertEquals(33, readBits(bytes, offset, 8));
+        offset += 8;
         assertEquals(0xFFF, readBits(bytes, offset, 12));
         offset += 12;
         assertEquals(2, readBits(bytes, offset, 12));
@@ -104,7 +104,7 @@ public class MonsterBlockWriterTest {
         MonsterColumns withPowers = oneMonster(2);
         withPowers.powerEntryCount[0] = 2;
         withPowers.powerWireId[0] = 0;
-        withPowers.powerWireId[1] = 4095;
+        withPowers.powerWireId[1] = 255;
         withPowers.powerAmount[0] = -2048;
         withPowers.powerAmount[1] = 2047;
         MonsterBlockWriter.write(new BitWriter(0), withPowers);
@@ -118,6 +118,12 @@ public class MonsterBlockWriterTest {
         assertRejected(column -> column.intentDamage[0] = 256);
         assertRejected(column -> column.intentMultiAmount[0] = 256);
         assertRejected(column -> column.intentWireId[0] = 16);
+
+        MonsterColumns highPowerWireId = oneMonster(1);
+        highPowerWireId.powerEntryCount[0] = 1;
+        highPowerWireId.powerWireId[0] = 256;
+        assertThrows(IllegalArgumentException.class,
+            () -> MonsterBlockWriter.write(new BitWriter(0), highPowerWireId));
 
         MonsterColumns lowPower = oneMonster(1);
         lowPower.powerEntryCount[0] = 1;

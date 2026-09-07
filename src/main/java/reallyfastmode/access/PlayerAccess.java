@@ -7,8 +7,10 @@ import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.stances.AbstractStance;
 import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
+import reallyfastmode.protocol.PlayerProtocol;
 import reallyfastmode.protocol.VanillaCatalog.VanillaOrbCatalog;
 import reallyfastmode.protocol.VanillaCatalog.VanillaPowerCatalog;
+import reallyfastmode.protocol.VanillaCatalog.VanillaRelicCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,6 +93,13 @@ public final class PlayerAccess {
         return AbstractDungeon.player == null
             ? Collections.<AbstractRelic>emptyList()
             : immutableCopy(AbstractDungeon.player.relics);
+    }
+
+    /** Returns the vanilla relic wire id, or the protocol's fixed unknown id. */
+    public static int relicWireId(AbstractRelic relic) {
+        AbstractRelic checkedRelic = Objects.requireNonNull(relic, "relic");
+        Integer wireId = VanillaRelicCatalog.relicIdToWireId.get(checkedRelic.relicId);
+        return wireId == null ? PlayerProtocol.UNKNOWN_RELIC_WIRE_ID : wireId;
     }
 
     public static int relicCounter(AbstractRelic relic) {

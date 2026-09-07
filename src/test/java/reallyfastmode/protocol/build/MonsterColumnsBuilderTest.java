@@ -91,6 +91,12 @@ public class MonsterColumnsBuilderTest {
         assertThrows(IllegalArgumentException.class,
             () -> MonsterColumnsBuilder.buildFromSource(1, hpOverflow));
 
+        FakeSource powerWireIdOverflow = new FakeSource(1);
+        powerWireIdOverflow.powerWireId = new int[][]{{256}};
+        powerWireIdOverflow.powerAmount = new int[][]{{0}};
+        assertThrows(IllegalArgumentException.class,
+            () -> MonsterColumnsBuilder.buildFromSource(1, powerWireIdOverflow));
+
         FakeSource damageOverflow = new FakeSource(1);
         damageOverflow.attack[0] = true;
         damageOverflow.intentDamage[0] = 256;
