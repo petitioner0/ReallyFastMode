@@ -50,24 +50,18 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code PlayerAccess}. */
     public static final class Player {
-        public static final int ID = 0;
-        public static final int PLAYER_CLASS = 1;
-        public static final int HP = 2;
-        public static final int MAX_HP = 3;
-        public static final int BLOCK = 4;
-        public static final int ENERGY = 5;
-        public static final int GOLD = 6;
-        public static final int GAME_HAND_SIZE = 7;
-        public static final int MASTER_HAND_SIZE = 8;
-        public static final int POTION_SLOTS = 9;
-        public static final int MAX_ORBS = 10;
-        public static final int MASTER_MAX_ORBS = 11;
-        public static final int POWERS = 12;
-        public static final int RELICS_WIRE_ID = 13;
-        public static final int RELICS_COUNT = 14;
-        public static final int ORBS = 15;
-        public static final int STANCE = 16;
-        public static final int SIZE = 17;
+        public static final int HP = 0;
+        public static final int MAX_HP = 1;
+        public static final int BLOCK = 2;
+        public static final int ENERGY = 3;
+        public static final int GOLD = 4;
+        public static final int MAX_ORBS = 5;
+        public static final int ORBS_WIRE_ID = 6;
+        public static final int POWERS_WIRE_ID = 7;
+        public static final int POWER_COUNTS = 8;
+        public static final int RELICS_WIRE_ID = 9;
+        public static final int RELICS_COUNT = 10;
+        public static final int SIZE = 11;
 
         private Player() {
         }
@@ -157,12 +151,9 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code PotionAccess}. */
     public static final class Potion {
-        public static final int POTIONS = 0;
-        public static final int WIRED_ID = 1;
-        public static final int NAME = 2;
-        public static final int SLOT = 3;
-        public static final int PRICE = 4;
-        public static final int SIZE = 5;
+        public static final int POTION_SLOTS_COUNT = 0;
+        public static final int POTION_WIRED_ID = 1;
+        public static final int SIZE = 2;
 
         private Potion() {
         }
