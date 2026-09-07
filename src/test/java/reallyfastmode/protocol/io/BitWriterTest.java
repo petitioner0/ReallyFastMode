@@ -57,11 +57,76 @@ public class BitWriterTest {
     }
 
     @Test
+    public void bulkWriteMatchesBitAtATimeReferenceAtEveryAlignment() {
+        int[] values = {
+            0, 1, -1, Integer.MIN_VALUE, Integer.MAX_VALUE,
+            0x01234567, 0x89ABCDEF, 0x55555555, 0xAAAAAAAA
+        };
+
+        for (int initialBits = 0; initialBits < 8; initialBits++) {
+            for (int bitCount = 0; bitCount <= 32; bitCount++) {
+                for (int value : values) {
+                    byte[] actual = new byte[5];
+                    byte[] expected = new byte[5];
+                    BitWriter out = BitWriter.wrap(actual);
+
+                    out.writeBits(-1, initialBits);
+                    out.writeBits(value, bitCount);
+                    writeBitsOneAtATime(expected, initialBits, value, bitCount);
+
+                    assertArrayEquals(expected, actual);
+                    assertEquals(initialBits + bitCount, out.bitPosition());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void writesDirectlyIntoCallerOwnedDestination() {
+        byte[] packet = new byte[2];
+        BitWriter out = BitWriter.wrap(packet);
+
+        out.writeBits(0xABC, 12);
+
+        assertArrayEquals(new byte[]{(byte) 0xAB, (byte) 0xC0}, packet);
+        assertEquals(2, out.byteSize());
+    }
+
+    @Test
+    public void fixedDestinationRejectsOverflowBeforeChangingArray() {
+        byte[] packet = new byte[1];
+        BitWriter out = BitWriter.wrap(packet);
+        out.writeByte(0xA5);
+
+        assertThrows(IllegalStateException.class, () -> out.writeBit(true));
+        assertArrayEquals(new byte[]{(byte) 0xA5}, packet);
+        assertEquals(8, out.bitPosition());
+    }
+
+    @Test
     public void rejectsInvalidArguments() {
         assertThrows(IllegalArgumentException.class, () -> new BitWriter(-1));
+        assertThrows(NullPointerException.class, () -> BitWriter.wrap(null));
         BitWriter out = new BitWriter(0);
         assertThrows(IllegalArgumentException.class, () -> out.writeBits(0, 33));
         assertThrows(IllegalArgumentException.class, () -> out.writeByte(256));
         assertThrows(IllegalArgumentException.class, () -> out.writeUnsignedShort(-1));
+    }
+
+    private static void writeBitsOneAtATime(
+        byte[] destination,
+        int initialBits,
+        int value,
+        int bitCount
+    ) {
+        int position = 0;
+        for (; position < initialBits; position++) {
+            destination[position >>> 3] |= (byte) (1 << (7 - (position & 7)));
+        }
+        for (int i = bitCount - 1; i >= 0; i--, position++) {
+            if (((value >>> i) & 1) != 0) {
+                destination[position >>> 3] |= (byte) (1 << (7 - (position & 7)));
+            }
+        }
     }
 }

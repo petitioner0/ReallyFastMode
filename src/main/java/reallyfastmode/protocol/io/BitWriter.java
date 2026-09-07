@@ -4,12 +4,35 @@ package reallyfastmode.protocol.io;
 public final class BitWriter {
     private byte[] buffer;
     private int bitPosition;
+    private final boolean growable;
 
     public BitWriter(int initialCapacityBytes) {
         if (initialCapacityBytes < 0) {
             throw new IllegalArgumentException("initialCapacityBytes=" + initialCapacityBytes);
         }
         this.buffer = new byte[Math.max(initialCapacityBytes, 16)];
+        this.growable = true;
+    }
+
+    private BitWriter(byte[] destination) {
+        this.buffer = destination;
+        this.growable = false;
+    }
+
+    /**
+     * Writes directly into a caller-owned, zero-filled destination array.
+     *
+     * <p>The returned writer has fixed capacity: it never replaces or copies
+     * {@code destination}. Writing past the end fails before that write changes
+     * the array. The caller can use {@code destination} directly after writing,
+     * avoiding the allocation and full-buffer copy performed by
+     * {@link #toByteArray()}.</p>
+     */
+    public static BitWriter wrap(byte[] destination) {
+        if (destination == null) {
+            throw new NullPointerException("destination");
+        }
+        return new BitWriter(destination);
     }
 
     public int bitPosition() {
@@ -32,16 +55,41 @@ public final class BitWriter {
         if (bitCount < 0 || bitCount > 32) {
             throw new IllegalArgumentException("bitCount=" + bitCount);
         }
+        if (bitCount == 0) {
+            return;
+        }
         ensureBits(bitCount);
 
-        for (int i = bitCount - 1; i >= 0; i--) {
-            int bit = (value >>> i) & 1;
-            int byteIndex = bitPosition >>> 3;
-            int bitIndex = 7 - (bitPosition & 7);
-            if (bit != 0) {
-                buffer[byteIndex] |= (byte) (1 << bitIndex);
+        int remaining = bitCount;
+        int offset = bitPosition & 7;
+
+        if (offset != 0) {
+            int available = 8 - offset;
+            int take = Math.min(available, remaining);
+            int shift = remaining - take;
+            int chunk = (value >>> shift) & ((1 << take) - 1);
+
+            buffer[bitPosition >>> 3] |= (byte) (chunk << (available - take));
+            bitPosition += take;
+            remaining -= take;
+
+            if (remaining == 0) {
+                return;
             }
-            bitPosition++;
+        }
+
+        int byteIndex = bitPosition >>> 3;
+        while (remaining >= 8) {
+            int shift = remaining - 8;
+            buffer[byteIndex++] = (byte) (value >>> shift);
+            bitPosition += 8;
+            remaining -= 8;
+        }
+
+        if (remaining != 0) {
+            int chunk = value & ((1 << remaining) - 1);
+            buffer[byteIndex] = (byte) (chunk << (8 - remaining));
+            bitPosition += remaining;
         }
     }
 
@@ -74,6 +122,12 @@ public final class BitWriter {
         int requiredBytes = (requiredBits >>> 3) + ((requiredBits & 7) == 0 ? 0 : 1);
         if (requiredBytes <= buffer.length) {
             return;
+        }
+        if (!growable) {
+            throw new IllegalStateException(
+                "fixed destination capacity=" + buffer.length
+                    + " bytes, required=" + requiredBytes + " bytes"
+            );
         }
 
         int doubled = buffer.length <= Integer.MAX_VALUE / 2
