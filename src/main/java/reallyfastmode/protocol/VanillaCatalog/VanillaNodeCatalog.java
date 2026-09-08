@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Explicit three-bit wire mapping for vanilla dungeon-map node types. */
+/** Explicit wire mapping for vanilla dungeon-map node types. */
 public enum VanillaNodeCatalog {
     EMPTY(0, EmptyRoom.class),
     MONSTER(1, MonsterRoom.class),

@@ -173,9 +173,11 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code MapAccess}. */
     public static final class Map {
-        public static final int FULL_MAP_TYPE = 0;
-        public static final int HAS_EMERALD_KEY = 1;
-        public static final int SIZE = 2;
+        public static final int IS_ACT_4 = 0;
+        public static final int FULL_MAP_TYPE = 1;
+        public static final int EMERALD_KEY_COORDINATE = 2;
+        public static final int CONNECTIVITY = 3;
+        public static final int SIZE = 4;
 
         private Map() {
         }
@@ -183,8 +185,7 @@ public final class ProtocolSlots {
 
     public static final class CurrentMapSelection {
         public static final int CURRENT_NODE = 0;
-        public static final int AVAILABLE_MAP_NODES = 1;
-        public static final int SIZE = 2;
+        public static final int SIZE = 1;
 
         private CurrentMapSelection() {
         }
