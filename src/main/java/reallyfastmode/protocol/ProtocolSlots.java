@@ -164,8 +164,8 @@ public final class ProtocolSlots {
     /** Slots corresponding to {@code SelectionAccess}. */
     public static final class Selection {
         public static final int CANDIDATES_CARD_COUNT = 0;
-        public static final int CANDIDATES_CARD_WIRE_ID = 0;
-        public static final int SIZE = 1;
+        public static final int CANDIDATES_CARD_WIRE_ID = 1;
+        public static final int SIZE = 2;
 
         private Selection() {
         }
@@ -173,13 +173,20 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code MapAccess}. */
     public static final class Map {
-        public static final int MAP = 0;
-        public static final int CURRENT_NODE = 1;
-        public static final int AVAILABLE_MAP_NODES = 2;
-        public static final int HAS_EMERALD_KEY = 3;
-        public static final int SIZE = 4;
+        public static final int FULL_MAP_TYPE = 0;
+        public static final int HAS_EMERALD_KEY = 1;
+        public static final int SIZE = 2;
 
         private Map() {
+        }
+    }
+
+    public static final class CurrentMapSelection {
+        public static final int CURRENT_NODE = 0;
+        public static final int AVAILABLE_MAP_NODES = 1;
+        public static final int SIZE = 2;
+
+        private CurrentMapSelection() {
         }
     }
 
