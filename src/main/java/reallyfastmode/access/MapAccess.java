@@ -30,8 +30,17 @@ public final class MapAccess {
         return AbstractDungeon.getCurrMapNode();
     }
 
-    /** Returns the node's vanilla room-type wire id; an unused coordinate is empty. */
-    public static int wireId(MapRoomNode node) {
+    /** Returns the current map coordinate's vanilla room-type wire id. */
+    public static int wireId(int x, int y) {
+        if (AbstractDungeon.map == null) {
+            throw new IllegalStateException("No current dungeon map is available.");
+        }
+        return wireIdAt(AbstractDungeon.map, x, y);
+    }
+
+    static int wireIdAt(List<? extends List<MapRoomNode>> dungeonMap, int x, int y) {
+        List<MapRoomNode> row = Objects.requireNonNull(dungeonMap, "dungeonMap").get(y);
+        MapRoomNode node = Objects.requireNonNull(row, "map row").get(x);
         if (node == null || node.room == null) {
             return VanillaNodeCatalog.EMPTY.wireId;
         }
