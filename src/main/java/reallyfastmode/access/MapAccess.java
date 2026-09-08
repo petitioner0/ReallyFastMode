@@ -3,6 +3,7 @@ package reallyfastmode.access;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import reallyfastmode.protocol.VanillaCatalog.VanillaNodeCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +28,14 @@ public final class MapAccess {
 
     public static MapRoomNode currentNode() {
         return AbstractDungeon.getCurrMapNode();
+    }
+
+    /** Returns the node's vanilla room-type wire id; an unused coordinate is empty. */
+    public static int wireId(MapRoomNode node) {
+        if (node == null || node.room == null) {
+            return VanillaNodeCatalog.EMPTY.wireId;
+        }
+        return VanillaNodeCatalog.wireId(node.room.getClass());
     }
 
     public static List<MapRoomNode> availableMapNodes() {
