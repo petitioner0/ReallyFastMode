@@ -163,7 +163,8 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code SelectionAccess}. */
     public static final class Selection {
-        public static final int CANDIDATES = 0;
+        public static final int CANDIDATES_CARD_COUNT = 0;
+        public static final int CANDIDATES_CARD_WIRE_ID = 0;
         public static final int SIZE = 1;
 
         private Selection() {
