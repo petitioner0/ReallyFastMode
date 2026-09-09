@@ -8,7 +8,7 @@ import static org.junit.Assert.assertFalse;
 public class RunApiTest {
     @Test
     public void rejectsAscensionBelowOne() {
-        RunApiResult result = RunApi.startRun(123L, 7, 0);
+        RunApiResult result = RunApi.startRun("18ISL35FYK4", 7, 0);
 
         assertFalse(result.isSuccess());
         assertEquals("invalid_ascension_level", result.getCode());
@@ -16,7 +16,7 @@ public class RunApiTest {
 
     @Test
     public void rejectsAscensionAboveTwenty() {
-        RunApiResult result = RunApi.startRun(123L, 7, 21);
+        RunApiResult result = RunApi.startRun("18ISL35FYK4", 7, 21);
 
         assertFalse(result.isSuccess());
         assertEquals("invalid_ascension_level", result.getCode());

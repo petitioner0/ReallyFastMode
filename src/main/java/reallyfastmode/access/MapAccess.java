@@ -13,6 +13,7 @@ import java.util.Objects;
 
 /** Reads the current dungeon map and currently selectable nodes. */
 public final class MapAccess {
+
     private MapAccess() {
     }
 

@@ -5,6 +5,7 @@ import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.ModHelper;
+import com.megacrit.cardcrawl.helpers.SeedHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reallyfastmode.patches.access.RunIdPatches;
@@ -17,28 +18,82 @@ public final class RunApi {
     }
 
     /**
-     * Starts a standard, non-ascension Ironclad run with the supplied seed and run id.
+     * Starts a standard, non-ascension Ironclad run using a normal
+     * Slay the Spire seed string, for example "18ISL35FYK4".
+     *
      * This method must be called on the game render thread.
      */
-    public static synchronized RunApiResult startRun(long seed, int runId) {
-        return startRunInternal(seed, runId, 0);
+    public static synchronized RunApiResult startRun(String seed, int runId) {
+        Long numericSeed = parseSeed(seed);
+        if (numericSeed == null) {
+            return RunApiResult.error(
+                    "invalid_seed",
+                    "seed must be a valid Slay the Spire seed."
+            );
+        }
+
+        return startRunInternal(numericSeed, runId, 0);
     }
 
     /**
-     * Starts an Ironclad run at an ascension level from 1 through 20.
+     * Starts an Ironclad run at an ascension level from 1 through 20
+     * using a normal Slay the Spire seed string.
+     *
      * This method must be called on the game render thread.
      */
-    public static synchronized RunApiResult startRun(long seed, int runId, int ascensionLevel) {
+    public static synchronized RunApiResult startRun(
+            String seed,
+            int runId,
+            int ascensionLevel
+    ) {
         if (ascensionLevel < 1 || ascensionLevel > 20) {
             return RunApiResult.error(
-                "invalid_ascension_level",
-                "ascensionLevel must be between 1 and 20."
+                    "invalid_ascension_level",
+                    "ascensionLevel must be between 1 and 20."
             );
         }
-        return startRunInternal(seed, runId, ascensionLevel);
+
+        Long numericSeed = parseSeed(seed);
+        if (numericSeed == null) {
+            return RunApiResult.error(
+                    "invalid_seed",
+                    "seed must be a valid Slay the Spire seed."
+            );
+        }
+
+        return startRunInternal(numericSeed, runId, ascensionLevel);
     }
 
-    private static RunApiResult startRunInternal(long seed, int runId, int ascensionLevel) {
+    /**
+     * Converts a user-facing Slay the Spire seed into the internal long.
+     */
+    private static Long parseSeed(String seed) {
+        if (seed == null) {
+            return null;
+        }
+
+        String normalized = SeedHelper.sterilizeString(seed);
+
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        if (normalized.length() > SeedHelper.SEED_DEFAULT_LENGTH) {
+            return null;
+        }
+
+        try {
+            return SeedHelper.getLong(normalized);
+        } catch (RuntimeException exception) {
+            return null;
+        }
+    }
+
+    private static RunApiResult startRunInternal(
+            long seed,
+            int runId,
+            int ascensionLevel
+    ) {
         RunApiResult availability = validateStartAvailable();
         if (!availability.isSuccess()) {
             return availability;
@@ -50,7 +105,8 @@ public final class RunApi {
             CardCrawlGame.loadingSave = false;
             CardCrawlGame.saveFile = null;
             CardCrawlGame.trial = null;
-            CardCrawlGame.chosenCharacter = AbstractPlayer.PlayerClass.IRONCLAD;
+            CardCrawlGame.chosenCharacter =
+                    AbstractPlayer.PlayerClass.IRONCLAD;
 
             Settings.seed = Long.valueOf(seed);
             Settings.seedSet = true;
@@ -61,43 +117,56 @@ public final class RunApi {
             Settings.trialName = null;
 
             ModHelper.setModsFalse();
+
             AbstractDungeon.generateSeeds();
+
             AbstractDungeon.isAscensionMode = ascensionLevel > 0;
             AbstractDungeon.ascensionLevel = ascensionLevel;
 
             RunIdPatches.prepareRun(runId);
+
             CardCrawlGame.mainMenuScreen.isFadingOut = true;
             CardCrawlGame.mainMenuScreen.fadedOut = true;
+
             return RunApiResult.success(
-                "Ironclad run queued with seed " + seed + ", RunID " + runId
-                    + ", and ascension level " + ascensionLevel + "."
+                    "Ironclad run queued with seed "
+                            + SeedHelper.getString(seed)
+                            + ", RunID "
+                            + runId
+                            + ", and ascension level "
+                            + ascensionLevel
+                            + "."
             );
         } catch (RuntimeException exception) {
             RunIdPatches.cancelPreparedRun();
             LOGGER.error("start_run failed", exception);
-            return RunApiResult.error("internal_error", "start_run failed unexpectedly.");
+
+            return RunApiResult.error(
+                    "internal_error",
+                    "start_run failed unexpectedly."
+            );
         }
     }
 
     private static RunApiResult validateStartAvailable() {
         if (CardCrawlGame.isInARun()
-            || CardCrawlGame.mode == CardCrawlGame.GameMode.GAMEPLAY
-            || CardCrawlGame.dungeon != null
-            || RunIdPatches.isRunStartPending()) {
+                || CardCrawlGame.mode == CardCrawlGame.GameMode.GAMEPLAY
+                || CardCrawlGame.dungeon != null
+                || RunIdPatches.isRunStartPending()) {
             return RunApiResult.error(
-                "run_already_active",
-                "A run is already active or starting."
+                    "run_already_active",
+                    "A run is already active or starting."
             );
         }
 
         if (CardCrawlGame.mode != CardCrawlGame.GameMode.CHAR_SELECT
-            || CardCrawlGame.mainMenuScreen == null
-            || CardCrawlGame.dungeonTransitionScreen != null
-            || CardCrawlGame.mainMenuScreen.isFadingOut
-            || CardCrawlGame.mainMenuScreen.fadedOut) {
+                || CardCrawlGame.mainMenuScreen == null
+                || CardCrawlGame.dungeonTransitionScreen != null
+                || CardCrawlGame.mainMenuScreen.isFadingOut
+                || CardCrawlGame.mainMenuScreen.fadedOut) {
             return RunApiResult.error(
-                "game_not_ready",
-                "The game is not ready to start a run from the main menu."
+                    "game_not_ready",
+                    "The game is not ready to start a run from the main menu."
             );
         }
 
