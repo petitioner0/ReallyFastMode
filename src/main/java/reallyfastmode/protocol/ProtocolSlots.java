@@ -218,15 +218,19 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code ShopAccess}. */
     public static final class Shop {
-        public static final int CARDS = 0;
-        public static final int CARDS_PRICE = 1;
-        public static final int PURGE_AVAILABLE = 2;
-        public static final int ACTUAL_PURGE_COST = 3;
-        public static final int RELIC = 4;
-        public static final int RELIC_PRICE = 5;
-        public static final int POTION = 6;
-        public static final int POTION_PRICE = 7;
-        public static final int SIZE = 8;
+
+        public static final int CARDS_COUNT = 0;
+        public static final int CARDS_WIRE_ID = 1;
+        public static final int CARDS_PRICE = 2;
+        public static final int PURGE_AVAILABLE = 3;
+        public static final int ACTUAL_PURGE_COST = 4;
+        public static final int RELIC_COUNT = 5;
+        public static final int RELIC_WIRE_ID = 6;
+        public static final int RELIC_PRICE = 7;
+        public static final int POTION_COUNTS = 8;
+        public static final int POTION_WIRE_ID = 9;
+        public static final int POTION_PRICE = 10;
+        public static final int SIZE = 11;
 
         private Shop() {
         }
