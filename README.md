@@ -2,7 +2,7 @@
 
 一个用于《杀戮尖塔》（Slay the Spire）的实验性 Mod。开启快速模式后，它会跳过战斗中的大部分纯视觉动画和等待时间，同时尽量保留原版结算流程、回调与游戏状态变化。
 
-项目还提供了一组游戏内 Java 战斗 API，可以绕过鼠标拖拽和 Hitbox 点击，以语义命令完成出牌、使用药水和选择卡牌。
+项目还提供了一组游戏内 Java API，可以绕过鼠标拖拽和 Hitbox 点击，以语义命令完成出牌、使用药水、选择卡牌和选择休息点操作。
 
 ## 功能
 
@@ -63,6 +63,18 @@ RunApiResult ascensionResult = RunApi.startRun(seed, runId, ascensionLevel);
 - 原版 `AbstractDungeon` 会被注入公开的 `int RunID` 字段及 `getRunID()`；同一局跨幕创建的新 dungeon 实例保持相同 `RunID`。
 - 未通过 `RunApi` 启动的对局使用默认 `RunID` `0`。也可通过 `GameAccess.runId()` 读取当前局标识。
 - 与战斗 API 相同，必须在游戏渲染线程调用；命令返回成功表示开局已排入原版下一次游戏更新。
+
+### 休息点选择 API
+
+```java
+RestApi.selectOption(VanillaRestOptionCatalog.REST);
+```
+
+- 入口为 `reallyfastmode.api.RestApi.RestApi.selectOption`，只接收一个 `VanillaRestOptionCatalog` 枚举参数。
+- 支持 `REST`（休息）、`SMITH`（升级）、`DIG`（挖掘）、`LIFT`（举重）、`TOKE`（删牌）、`RECALL`（回忆）。
+- 从当前营火的真实选项列表中精确匹配类型，直接调用原版 `useOption()`，然后设置 `somethingSelected = true`。
+- `null`、`UNKNOWN`、当前不存在或 `usable == false` 的选项直接抛出 `IllegalArgumentException`；不在可操作休息点、已选择、存在其他界面或正在转场时抛出 `IllegalStateException`。校验失败不修改状态。
+- 必须在游戏渲染线程调用。正常返回表示已触发选项；治疗、奖励、升级或删牌选择等后续流程继续由原版处理。
 
 ### 原子状态读取 API
 
