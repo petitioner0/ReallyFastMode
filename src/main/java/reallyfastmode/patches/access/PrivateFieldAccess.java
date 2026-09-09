@@ -4,6 +4,9 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireRawPatch;
 import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.common.DiscardAction;
+import com.megacrit.cardcrawl.events.GenericEventDialog;
+import com.megacrit.cardcrawl.events.RoomEventDialog;
+import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.rooms.CampfireUI;
 import com.megacrit.cardcrawl.screens.CardRewardScreen;
@@ -48,6 +51,22 @@ public final class PrivateFieldAccess {
 
     public static boolean handSelectAnyNumber(HandCardSelectScreen screen) {
         return ((HandSelectFields) screen).reallyFastMode$handSelectAnyNumber();
+    }
+
+    public static boolean mapNodeSelectionPending(MapRoomNode node) {
+        return ((MapNodeFields) node).reallyFastMode$mapNodeSelectionPending();
+    }
+
+    public static void queueMapNodeSelection(MapRoomNode node) {
+        ((MapNodeFields) node).reallyFastMode$queueMapNodeSelection();
+    }
+
+    public static boolean imageEventDialogReady(GenericEventDialog dialog) {
+        return ((ImageEventDialogFields) dialog).reallyFastMode$imageEventDialogReady();
+    }
+
+    public static boolean roomEventDialogVisible(RoomEventDialog dialog) {
+        return ((RoomEventDialogFields) dialog).reallyFastMode$roomEventDialogVisible();
     }
 
     public static boolean handSelectForTransform(HandCardSelectScreen screen) {
@@ -104,6 +123,20 @@ public final class PrivateFieldAccess {
         boolean reallyFastMode$handSelectForTransform();
     }
 
+    public interface MapNodeFields {
+        boolean reallyFastMode$mapNodeSelectionPending();
+
+        void reallyFastMode$queueMapNodeSelection();
+    }
+
+    public interface ImageEventDialogFields {
+        boolean reallyFastMode$imageEventDialogReady();
+    }
+
+    public interface RoomEventDialogFields {
+        boolean reallyFastMode$roomEventDialogVisible();
+    }
+
     public interface GridSelectFields {
         int reallyFastMode$gridSelectRequiredCount();
 
@@ -129,6 +162,9 @@ public final class PrivateFieldAccess {
     @SpirePatch2(clz = AbstractMonster.class, method = "update")
     @SpirePatch2(clz = ShopScreen.class, method = "update")
     @SpirePatch2(clz = CampfireUI.class, method = "update")
+    @SpirePatch2(clz = MapRoomNode.class, method = "update")
+    @SpirePatch2(clz = GenericEventDialog.class, method = "update")
+    @SpirePatch2(clz = RoomEventDialog.class, method = "update")
     @SpirePatch2(clz = HandCardSelectScreen.class, method = "update")
     @SpirePatch2(clz = GridCardSelectScreen.class, method = "update")
     @SpirePatch2(clz = CardRewardScreen.class, method = "update")
@@ -152,6 +188,20 @@ public final class PrivateFieldAccess {
             } else if ("com.megacrit.cardcrawl.rooms.CampfireUI".equals(targetName)) {
                 addAccessors(target, CampfireFields.class,
                     "public java.util.ArrayList reallyFastMode$campfireButtons() { return this.buttons; }"
+                );
+            } else if ("com.megacrit.cardcrawl.map.MapRoomNode".equals(targetName)) {
+                addAccessors(target, MapNodeFields.class,
+                    "public boolean reallyFastMode$mapNodeSelectionPending() { return this.animWaitTimer != 0.0F; }",
+                    // A negative, nonzero timer enters vanilla's transition branch even at zero delta time.
+                    "public void reallyFastMode$queueMapNodeSelection() { this.animWaitTimer = -1.0F; }"
+                );
+            } else if ("com.megacrit.cardcrawl.events.GenericEventDialog".equals(targetName)) {
+                addAccessors(target, ImageEventDialogFields.class,
+                    "public boolean reallyFastMode$imageEventDialogReady() { return show && this.animateTimer == 0.0F; }"
+                );
+            } else if ("com.megacrit.cardcrawl.events.RoomEventDialog".equals(targetName)) {
+                addAccessors(target, RoomEventDialogFields.class,
+                    "public boolean reallyFastMode$roomEventDialogVisible() { return this.show; }"
                 );
             } else if ("com.megacrit.cardcrawl.screens.select.HandCardSelectScreen".equals(targetName)) {
                 addAccessors(target, HandSelectFields.class,

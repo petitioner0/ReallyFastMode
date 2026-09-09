@@ -76,6 +76,30 @@ RestApi.selectOption(VanillaRestOptionCatalog.REST);
 - `null`、`UNKNOWN`、当前不存在或 `usable == false` 的选项直接抛出 `IllegalArgumentException`；不在可操作休息点、已选择、存在其他界面或正在转场时抛出 `IllegalStateException`。校验失败不修改状态。
 - 必须在游戏渲染线程调用。正常返回表示已触发选项；治疗、奖励、升级或删牌选择等后续流程继续由原版处理。
 
+### 地图节点选择 API
+
+```java
+MapApi.selectNode(x, y);
+```
+
+- 入口为 `reallyfastmode.api.MapApi.MapApi.selectNode(int x, int y)`，坐标从零开始，先列 `x`、后行 `y`。
+- 必须在游戏渲染线程、地图选择界面且当前房间已完成时调用。目标必须属于 `MapAccess.availableMapNodes()`：首次选择为第零层有效节点，之后为普通连线或飞靴 / Flight 允许到达的节点。
+- 坐标无效、节点不存在或不可达直接抛出 `IllegalArgumentException`；当前不可选或已有节点等待进入时抛出 `IllegalStateException`。校验失败不修改状态。
+- 保留首次选房标记、飞靴消耗和问号房计数；通过 `MapRoomNode.update` 注入访问器将 `animWaitTimer` 设为负值，由原版下一次节点更新记录路径并启动房间切换。
+- 本接口选择当前地图列表中的实际节点；独立 Boss 图标不在该坐标候选集合内。
+
+### 事件选项 API
+
+```java
+EventApi.selectOption(0); // 选择最下面的选项
+```
+
+- 入口为 `reallyfastmode.api.EventApi.EventApi.selectOption(int optionIndex)`，从下往上按 `0, 1, 2, ...` 编号，禁用项同样占用编号。
+- 例如从上到下为「选项 A、禁用项、选项 B」，则传 `0` 选择 B、传 `1` 抛异常、传 `2` 选择 A。
+- 负数、越界或禁用项直接抛出 `IllegalArgumentException`；没有可操作事件对话框、存在覆盖界面或已有选择等待处理时抛出 `IllegalStateException`。校验失败不修改状态。
+- 支持 `GenericEventDialog` 和 `RoomEventDialog`，按 `总数 - 1 - optionIndex` 转换到原版列表下标，提交 `selectedOption` / `waitForInput`，由当前事件后续更新处理效果。
+- 必须在游戏渲染线程调用；`EventAccess.options()` 和事件协议仍保持原版从上到下的顺序，调用 API 时需转换编号。
+
 ### 原子状态读取 API
 
 `reallyfastmode.access` 提供只读的游戏状态入口：
