@@ -5,6 +5,7 @@ import com.megacrit.cardcrawl.rooms.CampfireUI;
 import com.megacrit.cardcrawl.rooms.RestRoom;
 import com.megacrit.cardcrawl.ui.campfire.AbstractCampfireOption;
 import reallyfastmode.patches.access.PrivateFieldAccess;
+import reallyfastmode.protocol.VanillaCatalog.VanillaRestOptionCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,6 +49,11 @@ public final class RestAccess {
 
     public static boolean usable(AbstractCampfireOption option) {
         return option(option).usable;
+    }
+
+    /** Returns the vanilla option wire ID, or the fixed unknown ID. */
+    public static int wireId(AbstractCampfireOption option) {
+        return VanillaRestOptionCatalog.wireId(option(option).getClass());
     }
 
     private static AbstractCampfireOption option(AbstractCampfireOption option) {

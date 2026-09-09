@@ -238,7 +238,7 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code RestAccess}. */
     public static final class Rest {
-        public static final int OPTIONS = 0;
+        public static final int OPTIONS_WIRE_ID = 0;
         public static final int SIZE = 1;
 
         private Rest() {
