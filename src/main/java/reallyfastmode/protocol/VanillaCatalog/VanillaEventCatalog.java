@@ -57,16 +57,25 @@ public enum VanillaEventCatalog {
     WEMEETAGAIN(48, "WeMeetAgain"),
     WHEEL_OF_CHANGE(49, "Wheel of Change"),
     WINDING_HALLS(50, "Winding Halls"),
-    WORLD_OF_GOOP(51, "World of Goop");
+    WORLD_OF_GOOP(51, "World of Goop"),
+    UNKNOWN(63, null);
 
     public static final Map<String, Integer> eventIdToWireId;
 
     static {
         Map<String, Integer> ids = new LinkedHashMap<String, Integer>();
         for (VanillaEventCatalog value : values()) {
-            ids.put(value.eventId, value.wireId);
+            if (value.eventId != null) {
+                ids.put(value.eventId, value.wireId);
+            }
         }
         eventIdToWireId = Collections.unmodifiableMap(ids);
+    }
+
+    /** Maps unrecognized and modded IDs to the fixed unknown wire ID. */
+    public static int wireId(String eventId) {
+        Integer wireId = eventIdToWireId.get(eventId);
+        return wireId == null ? UNKNOWN.wireId : wireId;
     }
 
     public final int wireId;

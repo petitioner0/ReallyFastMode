@@ -3,6 +3,7 @@ package reallyfastmode.protocol.build;
 import org.junit.Test;
 import reallyfastmode.protocol.EventProtocol;
 import reallyfastmode.protocol.ProtocolSlots;
+import reallyfastmode.protocol.VanillaCatalog.VanillaEventCatalog;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -63,6 +64,9 @@ public class EventSnapshotBuilderTest {
         assertEquals(3, EventProtocol.OPTIONS_ENTRY_COUNT_BITS);
         assertEquals(1, EventProtocol.OPTIONS_APPLICABILITY_BITS);
         assertEquals(9, EventProtocol.FIXED_BITS);
+        assertEquals(VanillaEventCatalog.UNKNOWN.wireId,
+            EventProtocol.UNKNOWN_EVENT_WIRE_ID);
+        assertEquals(63, EventProtocol.UNKNOWN_EVENT_WIRE_ID);
         assertEquals(0, ProtocolSlots.Event.EVENT_WIRE_ID);
         assertEquals(1, ProtocolSlots.Event.OPTIONS_ENTRY_COUNT);
         assertEquals(2, ProtocolSlots.Event.OPTIONS_APPLICABILITY);

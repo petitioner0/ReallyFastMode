@@ -35,7 +35,7 @@ public final class EventAccess {
         AbstractEvent event = requiredEvent();
         try {
             String eventId = (String) event.getClass().getField("ID").get(null);
-            return VanillaEventCatalog.eventIdToWireId.get(eventId);
+            return VanillaEventCatalog.wireId(eventId);
         } catch (NoSuchFieldException exception) {
             throw new IllegalArgumentException(
                 event.getClass().getName() + " has no public static ID field",

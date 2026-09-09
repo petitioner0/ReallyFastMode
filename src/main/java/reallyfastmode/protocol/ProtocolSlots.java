@@ -227,7 +227,7 @@ public final class ProtocolSlots {
         public static final int RELIC_COUNT = 5;
         public static final int RELIC_WIRE_ID = 6;
         public static final int RELIC_PRICE = 7;
-        public static final int POTION_COUNTS = 8;
+        public static final int POTION_COUNT = 8;
         public static final int POTION_WIRE_ID = 9;
         public static final int POTION_PRICE = 10;
         public static final int SIZE = 11;

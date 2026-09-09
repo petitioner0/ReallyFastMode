@@ -50,14 +50,14 @@ public final class ShopAccess {
         ShopScreen screen = AbstractDungeon.shopScreen;
         return !active() || screen == null
             ? Collections.<StoreRelic>emptyList()
-            : immutableCopy(PrivateFieldAccess.shopRelics(screen));
+            : remainingRelics(PrivateFieldAccess.shopRelics(screen));
     }
 
     public static List<StorePotion> potions() {
         ShopScreen screen = AbstractDungeon.shopScreen;
         return !active() || screen == null
             ? Collections.<StorePotion>emptyList()
-            : immutableCopy(PrivateFieldAccess.shopPotions(screen));
+            : remainingPotions(PrivateFieldAccess.shopPotions(screen));
     }
 
     public static boolean purgeAvailable() {
@@ -103,6 +103,32 @@ public final class ShopAccess {
 
     private static StorePotion storePotion(StorePotion storePotion) {
         return Objects.requireNonNull(storePotion, "storePotion");
+    }
+
+    private static List<StoreRelic> remainingRelics(List<StoreRelic> source) {
+        if (source == null || source.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<StoreRelic> result = new ArrayList<StoreRelic>();
+        for (StoreRelic relic : source) {
+            if (relic == null || !relic.isPurchased) {
+                result.add(relic);
+            }
+        }
+        return immutableCopy(result);
+    }
+
+    private static List<StorePotion> remainingPotions(List<StorePotion> source) {
+        if (source == null || source.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<StorePotion> result = new ArrayList<StorePotion>();
+        for (StorePotion potion : source) {
+            if (potion == null || !potion.isPurchased) {
+                result.add(potion);
+            }
+        }
+        return immutableCopy(result);
     }
 
     private static <T> List<T> immutableCopy(List<T> source) {

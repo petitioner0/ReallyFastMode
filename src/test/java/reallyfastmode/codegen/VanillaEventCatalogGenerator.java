@@ -30,7 +30,8 @@ public final class VanillaEventCatalogGenerator {
             "VanillaEventCatalog",
             "VanillaEventCatalogGenerator",
             "eventId",
-            "eventIdToWireId"
+            "eventIdToWireId",
+            63
         );
     }
 }

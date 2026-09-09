@@ -59,7 +59,39 @@ final class AsmVanillaCatalogGenerator {
             mapFieldName,
             Collections.<String>emptyList(),
             null,
+            null,
             null
+        );
+    }
+
+    static int generate(
+        ClassLoader loader,
+        String packagePath,
+        String baseClassName,
+        Set<String> excludedClassNames,
+        String constantFieldName,
+        Path output,
+        String catalogClassName,
+        String generatorClassName,
+        String idFieldName,
+        String mapFieldName,
+        int unknownWireId
+    ) throws IOException {
+        return generate(
+            loader,
+            packagePath,
+            baseClassName,
+            excludedClassNames,
+            constantFieldName,
+            output,
+            catalogClassName,
+            generatorClassName,
+            idFieldName,
+            mapFieldName,
+            Collections.<String>emptyList(),
+            null,
+            null,
+            Integer.valueOf(unknownWireId)
         );
     }
 
@@ -88,6 +120,7 @@ final class AsmVanillaCatalogGenerator {
             idFieldName,
             mapFieldName,
             trailingIds,
+            null,
             null,
             null
         );
@@ -120,7 +153,8 @@ final class AsmVanillaCatalogGenerator {
             mapFieldName,
             Collections.<String>emptyList(),
             lookupClassName,
-            lookupIdFieldName
+            lookupIdFieldName,
+            null
         );
     }
 
@@ -137,7 +171,8 @@ final class AsmVanillaCatalogGenerator {
         String mapFieldName,
         List<String> trailingIds,
         String lookupClassName,
-        String lookupIdFieldName
+        String lookupIdFieldName,
+        Integer unknownWireId
     ) throws IOException {
         List<String> ids = discoverIds(
             loader,
@@ -148,6 +183,12 @@ final class AsmVanillaCatalogGenerator {
         );
         appendTrailingIds(ids, trailingIds, idFieldName);
         validateEnumNames(ids, idFieldName);
+        if (unknownWireId != null && unknownWireId.intValue() < ids.size()) {
+            throw new IllegalArgumentException(
+                "unknownWireId=" + unknownWireId + " overlaps generated wire IDs 0-"
+                    + (ids.size() - 1)
+            );
+        }
         writeCatalog(
             output,
             ids,
@@ -156,7 +197,8 @@ final class AsmVanillaCatalogGenerator {
             idFieldName,
             mapFieldName,
             lookupClassName,
-            lookupIdFieldName
+            lookupIdFieldName,
+            unknownWireId
         );
         return ids.size();
     }
@@ -317,7 +359,8 @@ final class AsmVanillaCatalogGenerator {
         String idFieldName,
         String mapFieldName,
         String lookupClassName,
-        String lookupIdFieldName
+        String lookupIdFieldName,
+        Integer unknownWireId
     ) throws IOException {
         Path absoluteOutput = output.toAbsolutePath().normalize();
         Path parent = absoluteOutput.getParent();
@@ -336,7 +379,11 @@ final class AsmVanillaCatalogGenerator {
                 String id = ids.get(wireId);
                 writer.write("    " + enumName(id, idFieldName) + "(" + wireId + ", \"");
                 writer.write(escapeJava(id));
-                writer.write(wireId + 1 == ids.size() ? "\");\n\n" : "\"),\n");
+                writer.write(wireId + 1 == ids.size() && unknownWireId == null
+                    ? "\");\n\n" : "\"),\n");
+            }
+            if (unknownWireId != null) {
+                writer.write("    UNKNOWN(" + unknownWireId + ", null);\n\n");
             }
             writer.write("    public static final Map<String, Integer> " + mapFieldName + ";\n");
             if (lookupClassName != null) {
@@ -346,10 +393,26 @@ final class AsmVanillaCatalogGenerator {
             writer.write("    static {\n");
             writer.write("        Map<String, Integer> ids = new LinkedHashMap<String, Integer>();\n");
             writer.write("        for (" + catalogClassName + " value : values()) {\n");
-            writer.write("            ids.put(value." + idFieldName + ", value.wireId);\n");
+            if (unknownWireId == null) {
+                writer.write("            ids.put(value." + idFieldName + ", value.wireId);\n");
+            } else {
+                writer.write("            if (value." + idFieldName + " != null) {\n");
+                writer.write("                ids.put(value." + idFieldName
+                    + ", value.wireId);\n");
+                writer.write("            }\n");
+            }
             writer.write("        }\n");
             writer.write("        " + mapFieldName + " = Collections.unmodifiableMap(ids);\n");
             writer.write("    }\n\n");
+            if (unknownWireId != null) {
+                writer.write("    /** Maps unrecognized and modded IDs"
+                    + " to the fixed unknown wire ID. */\n");
+                writer.write("    public static int wireId(String " + idFieldName + ") {\n");
+                writer.write("        Integer wireId = " + mapFieldName
+                    + ".get(" + idFieldName + ");\n");
+                writer.write("        return wireId == null ? UNKNOWN.wireId : wireId;\n");
+                writer.write("    }\n\n");
+            }
             if (lookupClassName != null) {
                 writer.write("    public static int wireId(" + lookupClassName + " value) {\n");
                 writer.write("        " + lookupClassName
