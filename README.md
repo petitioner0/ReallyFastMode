@@ -100,6 +100,18 @@ EventApi.selectOption(0); // 选择最下面的选项
 - 支持 `GenericEventDialog` 和 `RoomEventDialog`，按 `总数 - 1 - optionIndex` 转换到原版列表下标，提交 `selectedOption` / `waitForInput`，由当前事件后续更新处理效果。
 - 必须在游戏渲染线程调用；`EventAccess.options()` 和事件协议仍保持原版从上到下的顺序，调用 API 时需转换编号。
 
+### 奖励领取 API
+
+```java
+RewardApi.claimReward(0); // 尝试领取最上面的奖励
+```
+
+- 入口为 `reallyfastmode.api.RewardApi.RewardApi.claimReward(int rewardIndex)`，按当前奖励界面从上到下以 `0, 1, 2, ...` 编号。
+- 负数或越界直接抛出 `IllegalArgumentException`；奖励界面不可操作或已有一次领取等待处理时抛出 `IllegalStateException`。校验失败不修改状态。
+- API 只把对应 `RewardItem.isDone` 设置为 `true`，等同于原版 `RewardItem.update()` 对一次点击的提交结果。下一次 `CombatRewardScreen.update()` 会调用原版 `claimReward()`。
+- 奖励是否移除完全采用原版返回值：药水栏满时原版重置该奖励并显示提示；卡牌奖励打开原版选牌界面；金币、遗物和钥匙也走原版实现。
+- 必须在游戏渲染线程调用。正常返回表示领取尝试已排队，不代表该奖励必定领取成功。
+
 ### 原子状态读取 API
 
 `reallyfastmode.access` 提供只读的游戏状态入口：
