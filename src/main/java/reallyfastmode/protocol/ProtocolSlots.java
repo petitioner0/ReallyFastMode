@@ -25,6 +25,7 @@ public final class ProtocolSlots {
     public static final int POTION = 9;
     public static final int SELECTION = 10;
     public static final int MAP = 11;
+    public static final int CURRENT_MAP_SELECTION = 11;
     public static final int REWARD = 12;
     public static final int EVENT = 13;
     public static final int SHOP = 14;
@@ -193,11 +194,11 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code RewardAccess}. */
     public static final class Reward {
-        public static final int CARD_REWARD_CHOICES = 0;
-        public static final int TYPE = 1;
+        public static final int REWARD_COUNT = 0;
+        public static final int TYPE_WIRE_ID = 1;
         public static final int RELIC = 2;
         public static final int POTION = 3;
-        public static final int CARDS = 4;
+        public static final int GOLDS = 4;
         public static final int SIZE = 5;
 
         private Reward() {
@@ -207,7 +208,7 @@ public final class ProtocolSlots {
     /** Slots corresponding to {@code EventAccess}. */
     public static final class Event {
         public static final int EVENT_WIRE_ID = 0;
-        public static final int OPTIONS = 1;
+        public static final int OPTIONS_ENTRY_COUNT = 1;
         public static final int OPTIONS_APPLICABILITY = 2;
         public static final int SIZE = 3;
 

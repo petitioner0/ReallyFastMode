@@ -8,6 +8,7 @@ import com.megacrit.cardcrawl.rewards.RewardItem;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.screens.CardRewardScreen;
 import com.megacrit.cardcrawl.screens.CombatRewardScreen;
+import reallyfastmode.protocol.VanillaCatalog.VanillaRewardTypeCatalog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,11 @@ public final class RewardAccess {
 
     public static RewardItem.RewardType type(RewardItem reward) {
         return reward(reward).type;
+    }
+
+    /** Returns the reward type's explicit three-bit wire id. */
+    public static int typeWireId(RewardItem reward) {
+        return VanillaRewardTypeCatalog.wireId(reward(reward).type);
     }
 
     public static int gold(RewardItem reward) {
