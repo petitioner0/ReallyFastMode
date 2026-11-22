@@ -15,16 +15,18 @@ public final class MapBlockWriter {
         Objects.requireNonNull(out, "out");
         Objects.requireNonNull(map, "map");
 
+        if (!map.isAct4) {
+            validateEmeraldKey(map.emeraldKeyX, map.emeraldKeyY);
+            validateColumn("nodeWireId", map.nodeWireId, MapProtocol.NODE_WIRE_ID_BITS);
+            validateColumn("connectivity", map.connectivity, MapProtocol.CONNECTIVITY_BITS);
+        }
+
+        int prefix = (MapProtocol.FULL_MAP_KIND << MapProtocol.IS_ACT_4_BITS) | (map.isAct4 ? 1 : 0);
+        out.writeBits(prefix, MapProtocol.BLOCK_KIND_BITS + MapProtocol.IS_ACT_4_BITS);
         if (map.isAct4) {
-            out.writeBit(true);
             return;
         }
 
-        validateEmeraldKey(map.emeraldKeyX, map.emeraldKeyY);
-        validateColumn("nodeWireId", map.nodeWireId, MapProtocol.NODE_WIRE_ID_BITS);
-        validateColumn("connectivity", map.connectivity, MapProtocol.CONNECTIVITY_BITS);
-
-        out.writeBit(false);
         for (int wireId : map.nodeWireId) {
             out.writeBits(wireId, MapProtocol.NODE_WIRE_ID_BITS);
         }

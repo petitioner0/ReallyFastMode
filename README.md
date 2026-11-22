@@ -219,13 +219,19 @@ byte[] block = out.toByteArray();
 
 ### 状态包头
 
-`PacketHeaderWriter` 写入 4 字节包头。前 2 字节是无符号 `run_id`，后 2 字节是块存在掩码，两个字段都用大端序。掩码的第 `n` 位对应 `ProtocolSlots` 中编号为 `n` 的槽位，`0` 表示缺席，`1` 表示存在。全量地图与当前地图节点共用第 11 位。正文按槽位编号递增写入存在的块。
+`PacketHeaderWriter` 写入 4 字节包头。前 2 字节是无符号 `run_id`，后 2 字节是块存在掩码，两个字段都用大端序。掩码的第 `n` 位对应 `ProtocolSlots` 中编号为 `n` 的槽位，`0` 表示缺席，`1` 表示存在。正文按槽位编号递增写入存在的块。
+
+全量地图与当前地图节点共用第 11 位。该槽位正文的首位是类型标识。`0` 表示全量地图，紧接 `isAct4`，前三幕共 745 位，第四幕共 2 位。`1` 表示当前节点，紧接 4 位 X 和 4 位 Y，共 9 位。各块按位连续写入。
 
 ```java
 int mask = PacketHeaderProtocol.blockBit(ProtocolSlots.GAME)
     | PacketHeaderProtocol.blockBit(ProtocolSlots.PLAYER);
 PacketHeaderWriter.write(out, GameAccess.runId(), mask);
 ```
+
+`PacketDecoder.tryReadHeader(packet, expectedRunId)` 只检查 4 字节包头。包头缺失、不足 4 字节或 `run_id` 与预期不一致时返回 `null`。通过时返回 `Header`，可用 `hasBlock(slot)` 查询块是否存在，并从原数组的 `bodyOffsetBytes()` 位置继续读正文。
+
+`PacketDecoder.decode(packet, expectedRunId)` 在包头通过后从 bit 偏移 `32` 开始，按槽位编号递增调用掩码中置位的块解码器，并把每次返回的绝对 bit 偏移传给下一个解码器。包头拒收时返回 `-1`，通过时返回最后的 bit 偏移。当前 16 个解码入口均为占位，直接返回收到的偏移。
 
 ### 零拷贝 packet 输出
 

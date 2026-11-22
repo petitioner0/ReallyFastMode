@@ -1,12 +1,13 @@
 package reallyfastmode.protocol.write;
 
 import reallyfastmode.protocol.CurrentMapSelectionProtocol;
+import reallyfastmode.protocol.MapProtocol;
 import reallyfastmode.protocol.build.CurrentMapSelectionSnapshot;
 import reallyfastmode.protocol.io.BitWriter;
 
 import java.util.Objects;
 
-/** Writes the snapshot's two encoded coordinates in X, Y order. */
+/** Writes the map block kind followed by the coordinates in X, Y order. */
 public final class CurrentMapSelectionBlockWriter {
     private CurrentMapSelectionBlockWriter() {
     }
@@ -25,6 +26,9 @@ public final class CurrentMapSelectionBlockWriter {
             );
         }
 
-        out.writeBits((x << bits) | y, CurrentMapSelectionProtocol.CURRENT_NODE_BITS);
+        int coordinateBits = CurrentMapSelectionProtocol.CURRENT_NODE_BITS;
+        int coordinates = (x << bits) | y;
+        out.writeBits((MapProtocol.CURRENT_NODE_KIND << coordinateBits) | coordinates,
+            MapProtocol.BLOCK_KIND_BITS + coordinateBits);
     }
 }

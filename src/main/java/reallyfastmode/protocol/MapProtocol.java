@@ -1,7 +1,10 @@
 package reallyfastmode.protocol;
 
-/** Fixed constants for the full dungeon-map wire layout. */
+/** Wire constants for the shared map slot and the full dungeon-map layout. */
 public final class MapProtocol {
+    public static final int BLOCK_KIND_BITS = 1;
+    public static final int FULL_MAP_KIND = 0;
+    public static final int CURRENT_NODE_KIND = 1;
     public static final int IS_ACT_4_BITS = 1;
     public static final int MAP_WIDTH = 7;
     public static final int MAP_HEIGHT = 15;
