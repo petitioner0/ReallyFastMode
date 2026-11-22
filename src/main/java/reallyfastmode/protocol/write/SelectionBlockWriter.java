@@ -6,7 +6,7 @@ import reallyfastmode.protocol.io.BitWriter;
 
 import java.util.Objects;
 
-/** Encodes candidate card IDs and upgrade flags in matching columns. */
+/** Writes the selection counts followed by matching card ID and upgrade columns. */
 public final class SelectionBlockWriter {
     private SelectionBlockWriter() {
     }
@@ -16,6 +16,7 @@ public final class SelectionBlockWriter {
         validate(Objects.requireNonNull(selection, "selection"));
 
         out.writeBits(selection.candidatesCardCount, SelectionProtocol.CANDIDATES_CARD_COUNT_BITS);
+        out.writeBits(selection.maxSelectableCards, SelectionProtocol.MAX_SELECTABLE_CARDS_BITS);
         for (int wireId : selection.candidatesCardWireId) {
             out.writeBits(wireId, SelectionProtocol.CANDIDATES_CARD_WIRE_ID_BITS);
         }

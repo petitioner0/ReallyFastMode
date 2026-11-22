@@ -29,7 +29,8 @@ public final class SelectionSnapshotBuilder {
             );
         }
 
-        SelectionSnapshot result = new SelectionSnapshot(candidatesCardCount);
+        int maxSelectableCards = Math.min(source.selectionLimit(), candidatesCardCount);
+        SelectionSnapshot result = new SelectionSnapshot(candidatesCardCount, maxSelectableCards);
         for (int i = 0; i < candidatesCardCount; i++) {
             int wireId = source.candidatesCardWireId(i);
             requireUnsigned("candidatesCardWireId[" + i + "]", wireId,
@@ -50,6 +51,8 @@ public final class SelectionSnapshotBuilder {
     interface Source {
         int candidatesCardCount();
 
+        int selectionLimit();
+
         int candidatesCardWireId(int candidateIndex);
 
         boolean candidatesCardUpgraded(int candidateIndex);
@@ -65,6 +68,11 @@ public final class SelectionSnapshotBuilder {
         @Override
         public int candidatesCardCount() {
             return candidates.size();
+        }
+
+        @Override
+        public int selectionLimit() {
+            return SelectionAccess.selectionLimit();
         }
 
         @Override
