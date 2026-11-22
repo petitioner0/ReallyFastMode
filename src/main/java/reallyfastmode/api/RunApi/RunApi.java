@@ -9,6 +9,7 @@ import com.megacrit.cardcrawl.helpers.SeedHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reallyfastmode.patches.access.RunIdPatches;
+import reallyfastmode.protocol.PacketHeaderProtocol;
 
 /** Commands that manage a complete run rather than an individual combat. */
 public final class RunApi {
@@ -94,6 +95,12 @@ public final class RunApi {
             int runId,
             int ascensionLevel
     ) {
+        if (!PacketHeaderProtocol.isValidRunId(runId)) {
+            return RunApiResult.error(
+                    "invalid_run_id",
+                    "runId must be between 0 and " + PacketHeaderProtocol.MAX_RUN_ID + "."
+            );
+        }
         RunApiResult availability = validateStartAvailable();
         if (!availability.isSuccess()) {
             return availability;

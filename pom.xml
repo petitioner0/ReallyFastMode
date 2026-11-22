@@ -20,6 +20,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.sourceDirectory>${project.basedir}/src/main/java</java.sourceDirectory>
+        <java.buildDirectory>${project.basedir}/target</java.buildDirectory>
     </properties>
 
     <!-- This information will be displayed in ModTheSpire, the modded launcher. -->
@@ -58,23 +60,13 @@
             <scope>system</scope>
             <systemPath>${steam.path}/workshop/content/646570/1605833019/BaseMod.jar</systemPath>
         </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm</artifactId>
-            <version>9.6</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
 
     <!-- This is how your code is packaged into the jar file-->
     <build>
+        <sourceDirectory>${java.sourceDirectory}</sourceDirectory>
+        <directory>${java.buildDirectory}</directory>
         <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
@@ -196,15 +188,28 @@
     <profiles>
         <profile>
             <id>card-catalog-codegen</id>
+            <properties>
+                <java.sourceDirectory>${project.basedir}/src/codegen/java</java.sourceDirectory>
+                <java.buildDirectory>${project.basedir}/target/card-catalog-codegen</java.buildDirectory>
+            </properties>
             <build>
                 <plugins>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.13.0</version>
+                        <configuration>
+                            <includes>
+                                <include>reallyfastmode/codegen/VanillaCardCatalogGenerator.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
                         <version>3.5.0</version>
                         <configuration>
                             <mainClass>reallyfastmode.codegen.VanillaCardCatalogGenerator</mainClass>
-                            <classpathScope>test</classpathScope>
+                            <classpathScope>compile</classpathScope>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -213,6 +218,17 @@
 
         <profile>
             <id>entity-catalog-codegen</id>
+            <properties>
+                <java.sourceDirectory>${project.basedir}/src/codegen/java</java.sourceDirectory>
+                <java.buildDirectory>${project.basedir}/target/entity-catalog-codegen</java.buildDirectory>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm</artifactId>
+                    <version>9.6</version>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
                     <plugin>
@@ -221,7 +237,7 @@
                         <version>3.5.0</version>
                         <configuration>
                             <mainClass>reallyfastmode.codegen.VanillaEntityCatalogGenerator</mainClass>
-                            <classpathScope>test</classpathScope>
+                            <classpathScope>compile</classpathScope>
                         </configuration>
                     </plugin>
                 </plugins>

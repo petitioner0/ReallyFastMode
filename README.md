@@ -61,7 +61,8 @@ RunApiResult ascensionResult = RunApi.startRun(seed, runId, ascensionLevel);
 - 每日挑战、自定义挑战和无尽模式始终关闭。
 - 跳过主菜单淡出、第一幕标题转场和开局淡入；不会跳过涅奥奖励等会改变玩法结果的交互。
 - 原版 `AbstractDungeon` 会被注入公开的 `int RunID` 字段及 `getRunID()`；同一局跨幕创建的新 dungeon 实例保持相同 `RunID`。
-- 未通过 `RunApi` 启动的对局使用默认 `RunID` `0`。也可通过 `GameAccess.runId()` 读取当前局标识。
+- `runId` 由调用方分配，范围为 `0–65535`。越界返回 `invalid_run_id`。可通过 `GameAccess.runId()` 读取当前局标识。
+- `RunID` 写入当前对局存档并在读档时恢复。手动新局和缺少该字段的旧存档使用默认值 `0`。
 - 与战斗 API 相同，必须在游戏渲染线程调用；命令返回成功表示开局已排入原版下一次游戏更新。
 
 ### 休息点选择 API
@@ -215,6 +216,16 @@ byte[] block = out.toByteArray();
 ```
 
 捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
+
+### 状态包头
+
+`PacketHeaderWriter` 写入 4 字节包头。前 2 字节是无符号 `run_id`，后 2 字节是块存在掩码，两个字段都用大端序。掩码的第 `n` 位对应 `ProtocolSlots` 中编号为 `n` 的槽位，`0` 表示缺席，`1` 表示存在。全量地图与当前地图节点共用第 11 位。正文按槽位编号递增写入存在的块。
+
+```java
+int mask = PacketHeaderProtocol.blockBit(ProtocolSlots.GAME)
+    | PacketHeaderProtocol.blockBit(ProtocolSlots.PLAYER);
+PacketHeaderWriter.write(out, GameAccess.runId(), mask);
+```
 
 ### 零拷贝 packet 输出
 

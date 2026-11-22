@@ -30,7 +30,7 @@ import java.util.jar.JarFile;
  * <p>Run from the repository root with:</p>
  *
  * <pre>{@code
- * mvn -Pdefault,card-catalog-codegen test-compile exec:java
+ * mvn -Pdefault,card-catalog-codegen compile exec:java
  * }</pre>
  */
 public final class VanillaCardCatalogGenerator {

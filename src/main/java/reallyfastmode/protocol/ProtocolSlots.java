@@ -1,17 +1,11 @@
 package reallyfastmode.protocol;
 
 /**
- * Reference-only zero-based ordering for the concrete observation slots.
+ * Zero-based block and field slots for the state packet.
  *
- * <p>This class documents the intended slot order; it is not an implementation
- * based on {@code Object[]} and must not be used as one. Object arrays do not
- * provide the required performance characteristics, so concrete slot types use
- * this ordering only as a reference.</p>
+ * <p>The top-level constants are the packet presence-mask bit indices. The
+ * nested constants document the fields of each concrete block.</p>
  */
-
-
-// TODO(packet-header): Every packet header must contain run_id. Keep run_id
-// out of the Game block and do not allocate a Game slot for it.
 public final class ProtocolSlots {
     public static final int GAME = 0;
     public static final int PLAYER = 1;
@@ -25,7 +19,7 @@ public final class ProtocolSlots {
     public static final int POTION = 9;
     public static final int SELECTION = 10;
     public static final int MAP = 11;
-    public static final int CURRENT_MAP_SELECTION = 11;
+    public static final int CURRENT_MAP_SELECTION = MAP;
     public static final int REWARD = 12;
     public static final int EVENT = 13;
     public static final int SHOP = 14;

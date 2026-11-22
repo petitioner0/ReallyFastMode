@@ -4,6 +4,7 @@ import basemod.BaseMod;
 import basemod.interfaces.PostInitializeSubscriber;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 import reallyfastmode.config.FastModeConfig;
+import reallyfastmode.patches.access.RunIdPatches;
 import reallyfastmode.patches.vfx.AdvancedCombatEffectPatches;
 import reallyfastmode.ui.FastModeSettingsPanel;
 
@@ -15,6 +16,7 @@ public final class ReallyFastMode implements PostInitializeSubscriber {
 
     public static void initialize() {
         FastModeConfig.initialize();
+        RunIdPatches.registerSaveField();
         BaseMod.subscribe(new ReallyFastMode());
     }
 

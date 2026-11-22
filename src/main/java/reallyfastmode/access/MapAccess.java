@@ -3,6 +3,7 @@ package reallyfastmode.access;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import com.megacrit.cardcrawl.rooms.MonsterRoomBoss;
 import reallyfastmode.protocol.MapProtocol;
 import reallyfastmode.protocol.VanillaCatalog.VanillaNodeCatalog;
 
@@ -75,7 +76,25 @@ public final class MapAccess {
                 }
             }
         }
+        appendBossNodeIfAtLastRow(current, AbstractDungeon.map, available);
         return immutableCopy(available);
+    }
+
+    static void appendBossNodeIfAtLastRow(
+        MapRoomNode current,
+        List<? extends List<MapRoomNode>> dungeonMap,
+        List<MapRoomNode> available
+    ) {
+        if (current == null
+            || dungeonMap == null
+            || dungeonMap.isEmpty()
+            || current.y != dungeonMap.size() - 1) {
+            return;
+        }
+
+        MapRoomNode boss = new MapRoomNode(-1, MapProtocol.MAP_HEIGHT);
+        boss.room = new MonsterRoomBoss();
+        available.add(boss);
     }
 
     public static boolean hasEmeraldKey(int x, int y) {
