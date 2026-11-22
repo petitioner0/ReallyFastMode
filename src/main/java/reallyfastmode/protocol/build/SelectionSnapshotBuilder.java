@@ -35,6 +35,7 @@ public final class SelectionSnapshotBuilder {
             requireUnsigned("candidatesCardWireId[" + i + "]", wireId,
                 SelectionProtocol.CANDIDATES_CARD_WIRE_ID_BITS);
             result.candidatesCardWireId[i] = wireId;
+            result.candidatesCardUpgraded[i] = source.candidatesCardUpgraded(i);
         }
         return result;
     }
@@ -50,6 +51,8 @@ public final class SelectionSnapshotBuilder {
         int candidatesCardCount();
 
         int candidatesCardWireId(int candidateIndex);
+
+        boolean candidatesCardUpgraded(int candidateIndex);
     }
 
     private static final class StsSource implements Source {
@@ -66,10 +69,18 @@ public final class SelectionSnapshotBuilder {
 
         @Override
         public int candidatesCardWireId(int candidateIndex) {
-            AbstractCard candidate = Objects.requireNonNull(
+            return CardAccess.wireId(candidate(candidateIndex));
+        }
+
+        @Override
+        public boolean candidatesCardUpgraded(int candidateIndex) {
+            return CardAccess.upgraded(candidate(candidateIndex));
+        }
+
+        private AbstractCard candidate(int candidateIndex) {
+            return Objects.requireNonNull(
                 candidates.get(candidateIndex), "candidates[" + candidateIndex + "]"
             );
-            return CardAccess.wireId(candidate);
         }
     }
 }

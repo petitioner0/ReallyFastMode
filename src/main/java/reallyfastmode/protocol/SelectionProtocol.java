@@ -1,6 +1,6 @@
 package reallyfastmode.protocol;
 
-/** Fixed constants for the Selection candidates wire layout. */
+/** Selection layout: candidate count, card ID column, then one upgrade bit per candidate. */
 public final class SelectionProtocol {
     public static final int CANDIDATES_CARD_COUNT_BITS = 8;
     public static final int CANDIDATES_CARD_WIRE_ID_BITS = CardProtocol.CARD_WIRE_ID_BITS;

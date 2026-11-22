@@ -4,6 +4,7 @@ package reallyfastmode.protocol.build;
 public final class SelectionSnapshot {
     public final int candidatesCardCount;
     public final int[] candidatesCardWireId;
+    public final boolean[] candidatesCardUpgraded;
 
     public SelectionSnapshot(int candidatesCardCount) {
         if (candidatesCardCount < 0) {
@@ -13,5 +14,6 @@ public final class SelectionSnapshot {
         }
         this.candidatesCardCount = candidatesCardCount;
         this.candidatesCardWireId = new int[candidatesCardCount];
+        this.candidatesCardUpgraded = new boolean[candidatesCardCount];
     }
 }

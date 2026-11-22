@@ -160,7 +160,8 @@ public final class ProtocolSlots {
     public static final class Selection {
         public static final int CANDIDATES_CARD_COUNT = 0;
         public static final int CANDIDATES_CARD_WIRE_ID = 1;
-        public static final int SIZE = 2;
+        public static final int CANDIDATES_CARD_UPGRADED = 2;
+        public static final int SIZE = 3;
 
         private Selection() {
         }
@@ -232,7 +233,7 @@ public final class ProtocolSlots {
 
     /** Slots corresponding to {@code RestAccess}. */
     public static final class Rest {
-        public static final int OPTIONS_WIRE_ID = 0;
+        public static final int AVAILABLE_OPTIONS_MASK = 0;
         public static final int SIZE = 1;
 
         private Rest() {
