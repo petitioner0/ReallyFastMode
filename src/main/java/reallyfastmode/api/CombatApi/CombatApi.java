@@ -19,8 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Semantic combat commands that bypass mouse input while preserving vanilla
- * action, potion, turn, and selection resolution.
+ * Semantic combat and card selection commands that preserve vanilla resolution.
  *
  * <p>These methods read and mutate Slay the Spire's global state and therefore
  * must be called on the game's render thread. A future transport layer should
@@ -154,6 +153,7 @@ public final class CombatApi {
         }
     }
 
+    /** Selects cards in the active hand, grid or reward screen, or buys one shop card. */
     public static CombatApiResult selectCards(String... cardIds) {
         if (cardIds == null) {
             return selectCards((List<String>) null);
@@ -166,7 +166,7 @@ public final class CombatApi {
             List<String> safeCardIds = cardIds == null
                 ? null
                 : new ArrayList<String>(cardIds);
-            return CombatSelectionAdapter.selectCards(safeCardIds);
+            return CardSelectionAdapter.selectCards(safeCardIds);
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute select_cards.", exception);
             return CombatApiResult.error("internal_error", "select_cards failed unexpectedly.");
@@ -174,13 +174,13 @@ public final class CombatApi {
     }
 
     /**
-     * Skips a pending combat card-reward choice when vanilla marked that
+     * Skips a pending card-reward choice when vanilla marked that
      * choice as skippable. This is intentionally different from confirming a
-     * legal zero-card hand or grid selection with {@code selectCards([])}.
+     * legal zero-card hand or grid selection with {@code selectCards()}.
      */
     public static CombatApiResult skipCardSelection() {
         try {
-            return CombatSelectionAdapter.skipCardSelection();
+            return CardSelectionAdapter.skipCardSelection();
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute skip_card_selection.", exception);
             return CombatApiResult.error("internal_error", "skip_card_selection failed unexpectedly.");

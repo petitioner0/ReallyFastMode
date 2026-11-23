@@ -1,6 +1,7 @@
 package reallyfastmode.access;
 
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.dungeons.TheEnding;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.MonsterRoomBoss;
@@ -76,25 +77,14 @@ public final class MapAccess {
                 }
             }
         }
-        appendBossNodeIfAtLastRow(current, AbstractDungeon.map, available);
-        return immutableCopy(available);
-    }
-
-    static void appendBossNodeIfAtLastRow(
-        MapRoomNode current,
-        List<? extends List<MapRoomNode>> dungeonMap,
-        List<MapRoomNode> available
-    ) {
-        if (current == null
-            || dungeonMap == null
-            || dungeonMap.isEmpty()
-            || current.y != dungeonMap.size() - 1) {
-            return;
+        // The Boss icon sits outside the selectable grid, including in Act 4.
+        int bossApproachRow = TheEnding.ID.equals(AbstractDungeon.id) ? 2 : MapProtocol.MAP_HEIGHT - 1;
+        if (current.y == bossApproachRow) {
+            MapRoomNode boss = new MapRoomNode(-1, MapProtocol.MAP_HEIGHT);
+            boss.room = new MonsterRoomBoss();
+            available.add(boss);
         }
-
-        MapRoomNode boss = new MapRoomNode(-1, MapProtocol.MAP_HEIGHT);
-        boss.room = new MonsterRoomBoss();
-        available.add(boss);
+        return immutableCopy(available);
     }
 
     public static boolean hasEmeraldKey(int x, int y) {

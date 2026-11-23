@@ -9,6 +9,7 @@ import com.megacrit.cardcrawl.rewards.RewardItem;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.screens.CardRewardScreen;
 import com.megacrit.cardcrawl.screens.CombatRewardScreen;
+import com.megacrit.cardcrawl.screens.select.BossRelicSelectScreen;
 import reallyfastmode.protocol.VanillaCatalog.VanillaRewardTypeCatalog;
 
 import java.util.ArrayList;
@@ -38,6 +39,15 @@ public final class RewardAccess {
         return AbstractDungeon.screen != AbstractDungeon.CurrentScreen.CARD_REWARD || screen == null
             ? Collections.<AbstractCard>emptyList()
             : immutableCopy(screen.rewardGroup);
+    }
+
+    /** Returns Boss relic candidates in claimBossRelic index order. */
+    public static List<AbstractRelic> bossRelicChoices() {
+        BossRelicSelectScreen screen = AbstractDungeon.bossRelicScreen;
+        return AbstractDungeon.screen != AbstractDungeon.CurrentScreen.BOSS_REWARD
+            || screen == null || !screen.blights.isEmpty()
+            ? Collections.<AbstractRelic>emptyList()
+            : immutableCopy(screen.relics);
     }
 
     public static boolean cardRewardTakenAll() {

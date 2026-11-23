@@ -32,8 +32,8 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 - `playCard`：从当前手牌中定位卡牌并加入原版出牌队列。
 - `usePotion`：使用指定药水槽中的药水，并执行原版遗物回调和药水移除流程。
 - `endTurn`：触发原版结束回合按钮流程，排队执行玩家回合收尾和敌方回合。
-- `selectCards`：处理战斗中的手牌选择、网格选择和部分卡牌奖励选择界面；空数组只表示确认一个原版允许的零张选择。
-- `skipCardSelection`：仅在原版将当前战斗卡牌奖励选择标记为可跳过时执行 Skip。
+- `selectCards`：按当前界面选择手牌、网格卡牌、卡牌奖励或商店卡牌，战斗外也可调用。
+- `skipCardSelection`：在原版允许跳过当前卡牌奖励时返回上一界面。
 - 所有命令都返回 `CombatApiResult`，其中包含成功状态、错误码和说明消息。
 
 标识规则：
@@ -45,6 +45,21 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 可以通过 `CombatIdentifiers.cardId(card)` 和 `CombatIdentifiers.targetId(monster)` 生成对应标识。
 
 > 战斗 API 会直接读取并修改《杀戮尖塔》的全局状态，因此必须在游戏渲染线程调用。目前项目没有提供 HTTP、WebSocket 或其他外部传输层。
+
+### 战斗内外选牌 API
+
+```java
+CombatApi.selectCards(firstCardUuid, secondCardUuid); // 当前网格允许选两张时
+CombatApi.selectCards(rewardCardUuid); // 领取当前卡牌奖励
+CombatApi.selectCards(shopCardUuid); // 在商店购买一张卡牌
+ShopApi.openCardRemoval(); // 打开商店删牌网格
+CombatApi.selectCards(deckCardUuid); // 选择删牌并由商店扣费
+```
+
+- 营火、事件和遗物打开的网格沿用原版候选和数量规则。选择提交后，由原版升级、变化、删牌或遗物流程读取结果。
+- 无参数的 `selectCards()` 可确认原版允许的零张选择、单张卡牌预览或直接发放整组卡牌的界面。跳过卡牌奖励使用 `skipCardSelection()`。
+- 进入商店房后，原版初始化商品，Mod 随即打开商人界面。可以照常关闭界面并离开房间。
+- 购买时从 `ShopAccess.cards()` 获取当前商品的卡牌 UUID。每次购买一张，金币不足时返回 `insufficient_gold`，结算和补货走原版商店逻辑。
 
 ### 整局命令 API
 
@@ -83,11 +98,11 @@ RestApi.selectOption(VanillaRestOptionCatalog.REST);
 MapApi.selectNode(x, y);
 ```
 
-- 入口为 `reallyfastmode.api.MapApi.MapApi.selectNode(int x, int y)`，坐标从零开始，先列 `x`、后行 `y`。
-- 必须在游戏渲染线程、地图选择界面且当前房间已完成时调用。目标必须属于 `MapAccess.availableMapNodes()`：首次选择为第零层有效节点，之后为普通连线或飞靴 / Flight 允许到达的节点。
+- 入口为 `reallyfastmode.api.MapApi.MapApi.selectNode(int x, int y)`。普通节点使用零基坐标，先列 `x`、后行 `y`；唯一允许的负坐标是 Boss 节点 `(-1, 15)`。
+- 必须在游戏渲染线程、地图选择界面且当前房间已完成时调用。目标必须属于 `MapAccess.availableMapNodes()`。普通节点按首层、地图连线或飞靴 / Flight 判定可达性。
 - 坐标无效、节点不存在或不可达直接抛出 `IllegalArgumentException`；当前不可选或已有节点等待进入时抛出 `IllegalStateException`。校验失败不修改状态。
-- 保留首次选房标记、飞靴消耗和问号房计数；通过 `MapRoomNode.update` 注入访问器将 `animWaitTimer` 设为负值，由原版下一次节点更新记录路径并启动房间切换。
-- 本接口选择当前地图列表中的实际节点；独立 Boss 图标不在该坐标候选集合内。
+- 普通节点保留首次选房标记、飞靴消耗和问号房计数。API 将 `animWaitTimer` 设为负值，由原版 `MapRoomNode.update` 记录路径并启动切房。
+- 完成前三幕各自的地图末排房间，或完成第四幕精英房后，可以用 `selectNode(-1, 15)` 进入 Boss 房。该分支按原版 Boss 图标的规则记录路径并启动转场。
 
 ### 事件选项 API
 
@@ -101,17 +116,31 @@ EventApi.selectOption(0); // 选择最下面的选项
 - 支持 `GenericEventDialog` 和 `RoomEventDialog`，按 `总数 - 1 - optionIndex` 转换到原版列表下标，提交 `selectedOption` / `waitForInput`，由当前事件后续更新处理效果。
 - 必须在游戏渲染线程调用；`EventAccess.options()` 和事件协议仍保持原版从上到下的顺序，调用 API 时需转换编号。
 
-### 奖励领取 API
+### 开箱与奖励 API
 
 ```java
-RewardApi.claimReward(0); // 尝试领取最上面的奖励
+RewardApi.openChest();
+RewardApi.claimReward(0); // 尝试领取通用奖励页最上面的一项
+RewardApi.claimBossRelic(0); // 选择 Boss 遗物列表中的第一件
 ```
 
+- `openChest()` 在没有覆盖界面时打开当前房间的普通宝箱或 Boss 宝箱。原版开箱逻辑生成奖励并显示对应界面，领取由后续命令提交。
+- `claimBossRelic(int relicIndex)` 按 `RewardAccess.bossRelicChoices()` 的零基序号提交 Boss 遗物选择。原版处理初始遗物替换、选择记录和界面关闭。索引无效时抛出 `IllegalArgumentException`，当前无法选择或已有选择待处理时抛出 `IllegalStateException`。
 - 入口为 `reallyfastmode.api.RewardApi.RewardApi.claimReward(int rewardIndex)`，按当前奖励界面从上到下以 `0, 1, 2, ...` 编号。
 - 负数或越界直接抛出 `IllegalArgumentException`；奖励界面不可操作或已有一次领取等待处理时抛出 `IllegalStateException`。校验失败不修改状态。
 - API 只把对应 `RewardItem.isDone` 设置为 `true`，等同于原版 `RewardItem.update()` 对一次点击的提交结果。下一次 `CombatRewardScreen.update()` 会调用原版 `claimReward()`。
 - 奖励是否移除完全采用原版返回值：药水栏满时原版重置该奖励并显示提示；卡牌奖励打开原版选牌界面；金币、遗物和钥匙也走原版实现。
-- 必须在游戏渲染线程调用。正常返回表示领取尝试已排队，不代表该奖励必定领取成功。
+- 这些入口必须在游戏渲染线程调用。`claimReward()` 正常返回表示领取尝试已排队，是否领取成功由下一次游戏更新决定。
+
+### 继续操作 API
+
+```java
+ProceedApi.proceed();
+```
+
+- 入口为 `reallyfastmode.api.ProceedApi.ProceedApi.proceed()`，必须在游戏渲染线程调用。当前处于奖励页或已完成的房间，且原版「继续」按钮可操作时接受命令。
+- 正常返回表示操作已排队。下一次按钮更新会执行原版流程，包括打开地图、推进 Boss 宝箱、跨幕或进入胜利房。若房间或界面已切换，本次操作失效。
+- 当前不可继续或已有操作待处理时抛出 `IllegalStateException`。
 
 ### 原子状态读取 API
 
@@ -219,7 +248,7 @@ byte[] block = out.toByteArray();
 
 ### 状态包头
 
-`PacketHeaderWriter` 写入 4 字节包头。前 2 字节是无符号 `run_id`，后 2 字节是块存在掩码，两个字段都用大端序。掩码的第 `n` 位对应 `ProtocolSlots` 中编号为 `n` 的槽位，`0` 表示缺席，`1` 表示存在。正文按槽位编号递增写入存在的块。
+状态包使用 4 字节包头。前 2 字节是无符号 `run_id`，后 2 字节是块存在掩码，两个字段都用大端序。掩码的第 `n` 位对应 `ProtocolSlots` 中编号为 `n` 的槽位，`0` 表示缺席，`1` 表示存在。正文按槽位编号递增写入存在的块。
 
 全量地图与当前地图节点共用第 11 位。该槽位正文的首位是类型标识。`0` 表示全量地图，紧接 `isAct4`，前三幕共 745 位，第四幕共 2 位。`1` 表示当前节点，紧接 4 位 X 和 4 位 Y，共 9 位。各块按位连续写入。
 
@@ -228,6 +257,10 @@ int mask = PacketHeaderProtocol.blockBit(ProtocolSlots.GAME)
     | PacketHeaderProtocol.blockBit(ProtocolSlots.PLAYER);
 PacketHeaderWriter.write(out, GameAccess.runId(), mask);
 ```
+
+### Java 解码参考实现
+
+接收端可以用任意语言，按二进制协议定义的包头、槽位顺序、各块位布局和 ID 映射自行解码，并选择自己的数据结构、记录生命周期和错误处理方式。本仓库的 [`PacketDecoder`](src/main/java/reallyfastmode/protocol/read/PacketDecoder.java) 和 [`PacketRecord`](src/main/java/reallyfastmode/protocol/read/PacketRecord.java) 是 Java 环境下的参考实现。以下 API 说明适用于这份实现。
 
 `PacketDecoder.tryReadHeader(packet, expectedRunId)` 只检查 4 字节包头。包头缺失、不足 4 字节或 `run_id` 与预期不一致时返回 `null`。通过时返回 `Header`，可用 `hasBlock(slot)` 查询块是否存在，并从原数组的 `bodyOffsetBytes()` 位置继续读正文。
 

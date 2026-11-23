@@ -2,7 +2,6 @@ package reallyfastmode.temporary.randomrun;
 
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireRawPatch;
-import com.megacrit.cardcrawl.map.DungeonMap;
 import com.megacrit.cardcrawl.rewards.chests.AbstractChest;
 import com.megacrit.cardcrawl.screens.CardRewardScreen;
 import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
@@ -33,10 +32,6 @@ public final class TemporaryGameAccess {
         ((CardRewardCommit) screen).reallyFastMode$chooseTemporaryFirstCard();
     }
 
-    static boolean enterBoss(DungeonMap map) {
-        return ((BossMapCommit) map).reallyFastMode$enterTemporaryBoss();
-    }
-
     public interface ProceedCommit {
         void reallyFastMode$queueTemporaryProceed();
     }
@@ -51,14 +46,9 @@ public final class TemporaryGameAccess {
         void reallyFastMode$chooseTemporaryFirstCard();
     }
 
-    public interface BossMapCommit {
-        boolean reallyFastMode$enterTemporaryBoss();
-    }
-
     @SpirePatch2(clz = ProceedButton.class, method = "update")
     @SpirePatch2(clz = AbstractChest.class, method = "update")
     @SpirePatch2(clz = CardRewardScreen.class, method = "update")
-    @SpirePatch2(clz = DungeonMap.class, method = "update")
     public static class InjectTemporaryAccessPatch {
         @SpireRawPatch
         public static void inject(CtBehavior behavior)
@@ -102,53 +92,6 @@ public final class TemporaryGameAccess {
                         + " if (this.draft && this.draftCount < 15) { this.draftOpen(); }"
                         + " else { com.megacrit.cardcrawl.dungeons.AbstractDungeon.closeCurrentScreen();"
                         + " this.draftCount = 0; } }"
-                );
-            } else if (DungeonMap.class.getName().equals(targetName)) {
-                addAccessors(
-                    target,
-                    BossMapCommit.class,
-                    "public boolean reallyFastMode$enterTemporaryBoss() {"
-                        + " com.megacrit.cardcrawl.rooms.AbstractRoom room ="
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.getCurrRoom();"
-                        + " com.megacrit.cardcrawl.map.MapRoomNode current ="
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.getCurrMapNode();"
-                        + " if (room == null || current == null"
-                        + " || room.phase != com.megacrit.cardcrawl.rooms.AbstractRoom$RoomPhase.COMPLETE"
-                        + " || com.megacrit.cardcrawl.dungeons.AbstractDungeon.screen"
-                        + " != com.megacrit.cardcrawl.dungeons.AbstractDungeon$CurrentScreen.MAP)"
-                        + " { return false; }"
-                        + " boolean available = com.megacrit.cardcrawl.core.Settings.isDebug"
-                        + " || current.y == 14"
-                        + " || (\"TheEnding\".equals("
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.id)"
-                        + " && current.y == 2);"
-                        + " if (!available) { return false; }"
-                        + " current.taken = true;"
-                        + " java.util.Iterator edges = current.getEdges().iterator();"
-                        + " while (edges.hasNext()) {"
-                        + " com.megacrit.cardcrawl.map.MapEdge edge ="
-                        + " (com.megacrit.cardcrawl.map.MapEdge)edges.next();"
-                        + " if (edge != null) { edge.markAsTaken(); } }"
-                        + " com.megacrit.cardcrawl.helpers.input.InputHelper.justClickedLeft = false;"
-                        + " com.megacrit.cardcrawl.core.CardCrawlGame.music.fadeOutTempBGM();"
-                        + " com.megacrit.cardcrawl.map.MapRoomNode boss ="
-                        + " new com.megacrit.cardcrawl.map.MapRoomNode(-1, 15);"
-                        + " boss.room = new com.megacrit.cardcrawl.rooms.MonsterRoomBoss();"
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.nextRoom = boss;"
-                        + " if (com.megacrit.cardcrawl.dungeons.AbstractDungeon.pathY.size() > 1) {"
-                        + " java.util.ArrayList xs ="
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.pathX;"
-                        + " java.util.ArrayList ys ="
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.pathY;"
-                        + " xs.add(xs.get(xs.size() - 1));"
-                        + " ys.add(ys.get(ys.size() - 1)); }"
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.pathX.add("
-                        + " java.lang.Integer.valueOf(-1));"
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.pathY.add("
-                        + " java.lang.Integer.valueOf(15));"
-                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.nextRoomTransitionStart();"
-                        + " this.bossHb.hovered = false;"
-                        + " return true; }"
                 );
             }
         }

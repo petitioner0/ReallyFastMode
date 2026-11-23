@@ -4,10 +4,12 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
 import com.evacipated.cardcrawl.modthespire.lib.SpireRawPatch;
 import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.common.DiscardAction;
+import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.events.GenericEventDialog;
 import com.megacrit.cardcrawl.events.RoomEventDialog;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
+import com.megacrit.cardcrawl.rewards.chests.AbstractChest;
 import com.megacrit.cardcrawl.rooms.CampfireUI;
 import com.megacrit.cardcrawl.screens.CardRewardScreen;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
@@ -15,6 +17,7 @@ import com.megacrit.cardcrawl.screens.select.HandCardSelectScreen;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
 import com.megacrit.cardcrawl.ui.campfire.AbstractCampfireOption;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
@@ -45,6 +48,14 @@ public final class PrivateFieldAccess {
         return ((ShopFields) screen).reallyFastMode$shopPotions();
     }
 
+    public static void purchaseShopCard(ShopScreen screen, AbstractCard card) {
+        ((ShopFields) screen).reallyFastMode$purchaseShopCard(card);
+    }
+
+    public static void openShopCardRemoval(ShopScreen screen) {
+        ((ShopFields) screen).reallyFastMode$openShopCardRemoval();
+    }
+
     public static ArrayList<AbstractCampfireOption> campfireButtons(CampfireUI campfire) {
         return ((CampfireFields) campfire).reallyFastMode$campfireButtons();
     }
@@ -59,6 +70,14 @@ public final class PrivateFieldAccess {
 
     public static void queueMapNodeSelection(MapRoomNode node) {
         ((MapNodeFields) node).reallyFastMode$queueMapNodeSelection();
+    }
+
+    public static boolean proceedButtonAcceptsClick(ProceedButton button) {
+        return ((ProceedButtonFields) button).reallyFastMode$proceedButtonAcceptsClick();
+    }
+
+    public static boolean chestKeyRequirement(AbstractChest chest) {
+        return ((ChestFields) chest).reallyFastMode$chestKeyRequirement();
     }
 
     public static boolean imageEventDialogReady(GenericEventDialog dialog) {
@@ -77,16 +96,16 @@ public final class PrivateFieldAccess {
         return ((GridSelectFields) screen).reallyFastMode$gridSelectRequiredCount();
     }
 
+    public static AbstractCard gridPreviewedCard(GridCardSelectScreen screen) {
+        return ((GridSelectFields) screen).reallyFastMode$gridPreviewedCard();
+    }
+
     public static void setGridSelectAmount(GridCardSelectScreen screen, int amount) {
         ((GridSelectFields) screen).reallyFastMode$setGridSelectAmount(amount);
     }
 
-    public static boolean cardRewardDiscovery(CardRewardScreen screen) {
-        return ((CardRewardFields) screen).reallyFastMode$cardRewardDiscovery();
-    }
-
-    public static boolean cardRewardChooseOne(CardRewardScreen screen) {
-        return ((CardRewardFields) screen).reallyFastMode$cardRewardChooseOne();
+    public static void chooseCardReward(CardRewardScreen screen, AbstractCard card) {
+        ((CardRewardFields) screen).reallyFastMode$chooseCardReward(card);
     }
 
     public static boolean cardRewardSkippable(CardRewardScreen screen) {
@@ -111,6 +130,10 @@ public final class PrivateFieldAccess {
         ArrayList<StoreRelic> reallyFastMode$shopRelics();
 
         ArrayList<StorePotion> reallyFastMode$shopPotions();
+
+        void reallyFastMode$purchaseShopCard(AbstractCard card);
+
+        void reallyFastMode$openShopCardRemoval();
     }
 
     public interface CampfireFields {
@@ -129,6 +152,14 @@ public final class PrivateFieldAccess {
         void reallyFastMode$queueMapNodeSelection();
     }
 
+    public interface ProceedButtonFields {
+        boolean reallyFastMode$proceedButtonAcceptsClick();
+    }
+
+    public interface ChestFields {
+        boolean reallyFastMode$chestKeyRequirement();
+    }
+
     public interface ImageEventDialogFields {
         boolean reallyFastMode$imageEventDialogReady();
     }
@@ -140,13 +171,13 @@ public final class PrivateFieldAccess {
     public interface GridSelectFields {
         int reallyFastMode$gridSelectRequiredCount();
 
+        AbstractCard reallyFastMode$gridPreviewedCard();
+
         void reallyFastMode$setGridSelectAmount(int amount);
     }
 
     public interface CardRewardFields {
-        boolean reallyFastMode$cardRewardDiscovery();
-
-        boolean reallyFastMode$cardRewardChooseOne();
+        void reallyFastMode$chooseCardReward(AbstractCard card);
 
         boolean reallyFastMode$cardRewardSkippable();
     }
@@ -163,6 +194,8 @@ public final class PrivateFieldAccess {
     @SpirePatch2(clz = ShopScreen.class, method = "update")
     @SpirePatch2(clz = CampfireUI.class, method = "update")
     @SpirePatch2(clz = MapRoomNode.class, method = "update")
+    @SpirePatch2(clz = ProceedButton.class, method = "update")
+    @SpirePatch2(clz = AbstractChest.class, method = "update")
     @SpirePatch2(clz = GenericEventDialog.class, method = "update")
     @SpirePatch2(clz = RoomEventDialog.class, method = "update")
     @SpirePatch2(clz = HandCardSelectScreen.class, method = "update")
@@ -183,7 +216,11 @@ public final class PrivateFieldAccess {
             } else if ("com.megacrit.cardcrawl.shop.ShopScreen".equals(targetName)) {
                 addAccessors(target, ShopFields.class,
                     "public java.util.ArrayList reallyFastMode$shopRelics() { return this.relics; }",
-                    "public java.util.ArrayList reallyFastMode$shopPotions() { return this.potions; }"
+                    "public java.util.ArrayList reallyFastMode$shopPotions() { return this.potions; }",
+                    "public void reallyFastMode$purchaseShopCard(com.megacrit.cardcrawl.cards.AbstractCard card) {"
+                        + " this.resetTouchscreenVars(); this.purchaseCard(card); }",
+                    "public void reallyFastMode$openShopCardRemoval() {"
+                        + " this.resetTouchscreenVars(); this.purchasePurge(); }"
                 );
             } else if ("com.megacrit.cardcrawl.rooms.CampfireUI".equals(targetName)) {
                 addAccessors(target, CampfireFields.class,
@@ -194,6 +231,14 @@ public final class PrivateFieldAccess {
                     "public boolean reallyFastMode$mapNodeSelectionPending() { return this.animWaitTimer != 0.0F; }",
                     // A negative, nonzero timer enters vanilla's transition branch even at zero delta time.
                     "public void reallyFastMode$queueMapNodeSelection() { this.animWaitTimer = -1.0F; }"
+                );
+            } else if ("com.megacrit.cardcrawl.ui.buttons.ProceedButton".equals(targetName)) {
+                addAccessors(target, ProceedButtonFields.class,
+                    "public boolean reallyFastMode$proceedButtonAcceptsClick() { return !this.isHidden && !this.hb.clicked; }"
+                );
+            } else if ("com.megacrit.cardcrawl.rewards.chests.AbstractChest".equals(targetName)) {
+                addAccessors(target, ChestFields.class,
+                    "public boolean reallyFastMode$chestKeyRequirement() { return this.keyRequirement(); }"
                 );
             } else if ("com.megacrit.cardcrawl.events.GenericEventDialog".equals(targetName)) {
                 addAccessors(target, ImageEventDialogFields.class,
@@ -211,12 +256,26 @@ public final class PrivateFieldAccess {
             } else if ("com.megacrit.cardcrawl.screens.select.GridCardSelectScreen".equals(targetName)) {
                 addAccessors(target, GridSelectFields.class,
                     "public int reallyFastMode$gridSelectRequiredCount() { return this.numCards; }",
+                    "public com.megacrit.cardcrawl.cards.AbstractCard reallyFastMode$gridPreviewedCard() { return this.hoveredCard; }",
                     "public void reallyFastMode$setGridSelectAmount(int amount) { this.cardSelectAmount = amount; }"
                 );
             } else if ("com.megacrit.cardcrawl.screens.CardRewardScreen".equals(targetName)) {
                 addAccessors(target, CardRewardFields.class,
-                    "public boolean reallyFastMode$cardRewardDiscovery() { return this.discovery; }",
-                    "public boolean reallyFastMode$cardRewardChooseOne() { return this.chooseOne; }",
+                    // Match the desktop card-selection branch, including draft continuation.
+                    "public void reallyFastMode$chooseCardReward(com.megacrit.cardcrawl.cards.AbstractCard card) {"
+                        + " this.touchCard = null; this.confirmButton.hb.clicked = false;"
+                        + " this.confirmButton.hb.clickStarted = false; this.confirmButton.hide();"
+                        + " this.skipButton.hide(); this.bowlButton.hide();"
+                        + " if (this.codex) { this.codexCard = card; }"
+                        + " else if (this.discovery) { this.discoveryCard = card; }"
+                        + " else if (this.chooseOne) { card.onChoseThisOption();"
+                        + " com.megacrit.cardcrawl.dungeons.AbstractDungeon.effectList.add("
+                        + " new com.megacrit.cardcrawl.vfx.cardManip.ExhaustCardEffect(card)); }"
+                        + " else { this.acquireCard(card); }"
+                        + " this.takeReward();"
+                        + " if (this.draft && this.draftCount < 15) { this.draftOpen(); }"
+                        + " else { com.megacrit.cardcrawl.dungeons.AbstractDungeon.closeCurrentScreen();"
+                        + " this.draftCount = 0; } }",
                     "public boolean reallyFastMode$cardRewardSkippable() { return this.skippable; }"
                 );
             } else if ("com.megacrit.cardcrawl.actions.AbstractGameAction".equals(targetName)) {

@@ -1,5 +1,6 @@
 package reallyfastmode.protocol.build;
 
+import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rewards.RewardItem;
 import reallyfastmode.access.PlayerAccess;
 import reallyfastmode.access.PotionAccess;
@@ -10,25 +11,43 @@ import reallyfastmode.protocol.VanillaCatalog.VanillaRewardTypeCatalog;
 import java.util.List;
 import java.util.Objects;
 
-/** Captures caller-selected rewards into semantic flattened columns. */
+/** Captures reward entries and Boss relic choices into the same wire columns. */
 public final class RewardColumnsBuilder {
     private RewardColumnsBuilder() {
+    }
+
+    /** Captures rewards in the order of the active reward screen. */
+    public static RewardColumns build() {
+        List<AbstractRelic> bossRelics = RewardAccess.bossRelicChoices();
+        if (!bossRelics.isEmpty()) {
+            return buildBossRelics(bossRelics);
+        }
+        return build(RewardAccess.combatRewards());
     }
 
     public static RewardColumns build(List<RewardItem> rewards) {
         return buildFromSource(new StsSource(rewards));
     }
 
+    private static RewardColumns buildBossRelics(List<AbstractRelic> relics) {
+        int rewardCount = relics.size();
+        validateRewardCount(rewardCount);
+
+        RewardColumns result = new RewardColumns(rewardCount, rewardCount, 0, 0);
+        for (int i = 0; i < rewardCount; i++) {
+            int wireId = PlayerAccess.relicWireId(relics.get(i));
+            requireUnsigned("relicWireId[" + i + "]", wireId, RewardProtocol.RELIC_WIRE_ID_BITS);
+            result.typeWireId[i] = VanillaRewardTypeCatalog.RELIC.wireId;
+            result.relicWireId[i] = wireId;
+        }
+        return result;
+    }
+
     static RewardColumns buildFromSource(Source source) {
         Objects.requireNonNull(source, "source");
 
         int rewardCount = source.rewardCount();
-        if (rewardCount < 0 || rewardCount > RewardProtocol.MAX_REWARDS) {
-            throw new IllegalArgumentException(
-                "rewardCount=" + rewardCount
-                    + " outside 0-" + RewardProtocol.MAX_REWARDS
-            );
-        }
+        validateRewardCount(rewardCount);
 
         int[] typeWireIds = new int[rewardCount];
         int relicCount = 0;
@@ -76,6 +95,14 @@ public final class RewardColumnsBuilder {
             }
         }
         return result;
+    }
+
+    private static void validateRewardCount(int rewardCount) {
+        if (rewardCount < 0 || rewardCount > RewardProtocol.MAX_REWARDS) {
+            throw new IllegalArgumentException(
+                "rewardCount=" + rewardCount + " outside 0-" + RewardProtocol.MAX_REWARDS
+            );
+        }
     }
 
     private static boolean isGold(int typeWireId) {

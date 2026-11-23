@@ -2,12 +2,17 @@ package reallyfastmode.api.MapApi;
 
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.helpers.input.InputHelper;
+import com.megacrit.cardcrawl.map.DungeonMap;
+import com.megacrit.cardcrawl.map.MapEdge;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.EventRoom;
+import com.megacrit.cardcrawl.rooms.MonsterRoomBoss;
 import reallyfastmode.access.MapAccess;
 import reallyfastmode.patches.access.PrivateFieldAccess;
+import reallyfastmode.protocol.MapProtocol;
 
 import java.util.List;
 
@@ -18,17 +23,23 @@ public final class MapApi {
 
     /**
      * Selects a reachable node by its zero-based map coordinates (x, y).
-     * Vanilla MapRoomNode.update starts the room transition on its next update.
+     * The Boss icon uses (-1, 15) and starts its transition immediately.
+     * Regular nodes start their transition on the next vanilla node update.
      *
      * @throws IllegalArgumentException if the coordinates are not currently reachable
      * @throws IllegalStateException if the map is not accepting a selection
      */
     public static void selectNode(int x, int y) {
-        if (x < 0 || y < 0) {
-            throw new IllegalArgumentException("Map coordinates must be nonnegative.");
+        boolean bossIcon = x == -1 && y == MapProtocol.MAP_HEIGHT;
+        if (!bossIcon && (x < 0 || y < 0)) {
+            throw new IllegalArgumentException("Only the Boss node (-1, 15) accepts a negative coordinate.");
         }
         validateSelectionReady();
         MapRoomNode selected = requireReachableNode(x, y, MapAccess.availableMapNodes());
+        if (bossIcon) {
+            enterBossRoom(selected);
+            return;
+        }
 
         boolean firstRoom = !AbstractDungeon.firstRoomChosen;
         MapRoomNode current = AbstractDungeon.getCurrMapNode();
@@ -61,6 +72,36 @@ public final class MapApi {
         // Reuse the original delayed-selection branch for path/metrics/transition
         // bookkeeping, without simulating a hitbox click or waiting for an animation.
         PrivateFieldAccess.queueMapNodeSelection(selected);
+    }
+
+    private static void enterBossRoom(MapRoomNode boss) {
+        DungeonMap map = AbstractDungeon.dungeonMapScreen.map;
+        if (map == null) {
+            throw new IllegalStateException("The Boss map icon is unavailable.");
+        }
+
+        // Match DungeonMap.update's Boss icon branch, including path bookkeeping.
+        MapRoomNode current = AbstractDungeon.getCurrMapNode();
+        current.taken = true;
+        for (MapEdge edge : current.getEdges()) {
+            if (edge != null) {
+                edge.markAsTaken();
+            }
+        }
+        InputHelper.justClickedLeft = false;
+        CardCrawlGame.music.fadeOutTempBGM();
+        AbstractDungeon.nextRoom = boss;
+        List<Integer> pathX = AbstractDungeon.pathX;
+        List<Integer> pathY = AbstractDungeon.pathY;
+        if (pathY.size() > 1) {
+            pathX.add(pathX.get(pathX.size() - 1));
+            pathY.add(pathY.get(pathY.size() - 1) + 1);
+        } else {
+            pathX.add(1);
+            pathY.add(boss.y);
+        }
+        AbstractDungeon.nextRoomTransitionStart();
+        map.bossHb.hovered = false;
     }
 
     private static void validateSelectionReady() {
@@ -96,7 +137,7 @@ public final class MapApi {
 
     static MapRoomNode requireReachableNode(int x, int y, List<MapRoomNode> available) {
         for (MapRoomNode node : available) {
-            if (node.x == x && node.y == y) {
+            if (node.x == x && node.y == y && (x >= 0 || node.room instanceof MonsterRoomBoss)) {
                 return node;
             }
         }

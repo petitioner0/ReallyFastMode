@@ -15,7 +15,6 @@ import com.megacrit.cardcrawl.random.Random;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rewards.RewardItem;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
-import com.megacrit.cardcrawl.rooms.MonsterRoomBoss;
 import com.megacrit.cardcrawl.rooms.RestRoom;
 import com.megacrit.cardcrawl.rooms.TreasureRoom;
 import com.megacrit.cardcrawl.screens.select.BossRelicSelectScreen;
@@ -316,13 +315,6 @@ final class RandomRunBatchController {
         }
 
         MapRoomNode selected = available.get(randomMapIndex(mapRandom, available.size()));
-        if (selected.room instanceof MonsterRoomBoss) {
-            if (AbstractDungeon.dungeonMapScreen.map == null
-                || !TemporaryGameAccess.enterBoss(AbstractDungeon.dungeonMapScreen.map)) {
-                throw new IllegalStateException("The boss map node cannot be entered.");
-            }
-            return;
-        }
         MapApi.selectNode(selected.x, selected.y);
     }
 
