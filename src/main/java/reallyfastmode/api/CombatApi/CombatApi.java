@@ -1,6 +1,5 @@
 package reallyfastmode.api.CombatApi;
 
-import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.actions.utility.HandCheckAction;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardQueueItem;
@@ -13,6 +12,8 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import reallyfastmode.access.CombatAccess;
+import reallyfastmode.patches.protocol.CombatPacketPatches;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,6 +79,7 @@ public final class CombatApi {
             }
             AbstractDungeon.actionManager.addCardQueueItem(new CardQueueItem(card, target));
             AbstractDungeon.player.releaseCard();
+            CombatPacketPatches.awaitSettlement();
             return CombatApiResult.success("Card queued for play.");
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute play_card.", exception);
@@ -126,6 +128,7 @@ public final class CombatApi {
             }
             AbstractPotion.playPotionSound();
             AbstractDungeon.topPanel.destroyPotion(potionSlot);
+            CombatPacketPatches.awaitSettlement();
             return CombatApiResult.success("Potion used.");
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute use_potion.", exception);
@@ -166,7 +169,7 @@ public final class CombatApi {
             List<String> safeCardIds = cardIds == null
                 ? null
                 : new ArrayList<String>(cardIds);
-            return CardSelectionAdapter.selectCards(safeCardIds);
+            return trackCombatSelection(CardSelectionAdapter.selectCards(safeCardIds));
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute select_cards.", exception);
             return CombatApiResult.error("internal_error", "select_cards failed unexpectedly.");
@@ -180,7 +183,7 @@ public final class CombatApi {
      */
     public static CombatApiResult skipCardSelection() {
         try {
-            return CardSelectionAdapter.skipCardSelection();
+            return trackCombatSelection(CardSelectionAdapter.skipCardSelection());
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute skip_card_selection.", exception);
             return CombatApiResult.error("internal_error", "skip_card_selection failed unexpectedly.");
@@ -198,18 +201,17 @@ public final class CombatApi {
             return CombatApiResult.error("game_busy", "A game screen is currently waiting for input.");
         }
 
-        GameActionManager manager = AbstractDungeon.actionManager;
-        if (manager.phase != GameActionManager.Phase.WAITING_ON_USER
-            || manager.currentAction != null
-            || !manager.actions.isEmpty()
-            || !manager.preTurnActions.isEmpty()
-            || !manager.cardQueue.isEmpty()
-            || manager.turnHasEnded
-            || AbstractDungeon.player.isEndingTurn
-            || AbstractDungeon.player.endTurnQueued) {
+        if (!CombatAccess.isPlayerTurnIdle()) {
             return CombatApiResult.error("game_busy", "Combat actions are still resolving.");
         }
         return null;
+    }
+
+    private static CombatApiResult trackCombatSelection(CombatApiResult result) {
+        if (result.isSuccess() && isCombatRoom()) {
+            CombatPacketPatches.awaitSettlement();
+        }
+        return result;
     }
 
     private static boolean isCombatRoom() {

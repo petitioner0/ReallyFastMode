@@ -325,6 +325,12 @@ BitWriter out = BitWriter.wrap(packet);
 
 `wrap` 使用固定容量且不会替换底层数组；写出容量会在该次写入修改数组前抛出异常。目标数组必须是新建或已清零的数组。只有最终长度未知的场景才使用 growable constructor 和 `toByteArray()`。
 
+### 战斗状态包
+
+出牌、喝药或提交战斗选牌后，Mod 在 `AbstractDungeon.update()` 结束时检查战斗是否已结束、是否在等待选牌，或是否回到玩家可操作的闲时。普通包包含 `GAME`、`PLAYER`、`COMBAT`、`DECK_CARD`、四个战斗牌堆、`MONSTER` 和 `POTION`。等待选牌时附加 `SELECTION`，选择后继续等待后续效果结算。清场时退出战斗组包流程。
+
+状态包组好后立即通过 UDP 发往 `127.0.0.1:18776`。接收端监听该地址和端口，每条数据报的载荷就是一个完整的二进制状态包。可通过游戏 JVM 参数 `-Dreallyfastmode.state.port=<port>` 更换目的端口。
+
 ## 运行环境
 
 - 《杀戮尖塔》`12-18-2022`

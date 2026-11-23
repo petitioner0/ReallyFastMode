@@ -13,6 +13,7 @@ import com.megacrit.cardcrawl.screens.select.HandCardSelectScreen;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.ui.buttons.PeekButton;
 import com.megacrit.cardcrawl.vfx.FastCardObtainEffect;
+import reallyfastmode.access.SelectionAccess;
 import reallyfastmode.access.ShopAccess;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 
@@ -104,15 +105,7 @@ final class CardSelectionAdapter {
             return CombatApiResult.error("no_card_selection_pending", "Hand selection is unavailable.");
         }
 
-        List<AbstractCard> candidates = new ArrayList<AbstractCard>();
-        candidates.addAll(AbstractDungeon.player.hand.group);
-        for (AbstractCard selected : screen.selectedCards.group) {
-            if (!candidates.contains(selected)) {
-                candidates.add(selected);
-            }
-        }
-
-        CardResolution resolution = resolveCards(candidates, requestedCardIds);
+        CardResolution resolution = resolveCards(SelectionAccess.candidates(), requestedCardIds);
         if (resolution.error != null) {
             return resolution.error;
         }
