@@ -11,6 +11,11 @@ public final class SelectionBlockWriter {
     private SelectionBlockWriter() {
     }
 
+    static int bitSize(SelectionSnapshot selection) {
+        return SelectionProtocol.CANDIDATES_CARD_COUNT_BITS + SelectionProtocol.MAX_SELECTABLE_CARDS_BITS
+            + selection.candidatesCardCount * (SelectionProtocol.CANDIDATES_CARD_WIRE_ID_BITS + 1);
+    }
+
     public static void write(BitWriter out, SelectionSnapshot selection) {
         Objects.requireNonNull(out, "out");
         validate(Objects.requireNonNull(selection, "selection"));

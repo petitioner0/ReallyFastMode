@@ -12,6 +12,13 @@ public final class RewardBlockWriter {
     private RewardBlockWriter() {
     }
 
+    static int bitSize(RewardColumns rewards) {
+        return RewardProtocol.REWARD_COUNT_BITS + rewards.rewardCount * RewardProtocol.TYPE_WIRE_ID_BITS
+            + rewards.relicWireId.length * RewardProtocol.RELIC_WIRE_ID_BITS
+            + rewards.potionWireId.length * RewardProtocol.POTION_WIRE_ID_BITS
+            + rewards.golds.length * RewardProtocol.GOLD_BITS;
+    }
+
     public static void write(BitWriter out, RewardColumns rewards) {
         Objects.requireNonNull(out, "out");
         validate(Objects.requireNonNull(rewards, "rewards"));

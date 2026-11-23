@@ -8,21 +8,11 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon.CurrentScreen;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.ui.buttons.PeekButton;
-import com.megacrit.cardcrawl.vfx.AbstractGameEffect;
-import com.megacrit.cardcrawl.vfx.FastCardObtainEffect;
-import com.megacrit.cardcrawl.vfx.GainPennyEffect;
-import com.megacrit.cardcrawl.vfx.ObtainPotionEffect;
-import com.megacrit.cardcrawl.vfx.cardManip.ExhaustCardEffect;
-import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndAddToDiscardEffect;
-import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndAddToDrawPileEffect;
-import com.megacrit.cardcrawl.vfx.cardManip.ShowCardAndObtainEffect;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reallyfastmode.access.CombatAccess;
 import reallyfastmode.protocol.io.StatePacketSender;
-import reallyfastmode.protocol.write.CombatPacketWriter;
-
-import java.util.List;
+import reallyfastmode.protocol.write.CombatPacketPacker;
 
 /** Publishes battle snapshots when a combat command reaches the next input boundary. */
 public final class CombatPacketPatches {
@@ -74,7 +64,7 @@ public final class CombatPacketPatches {
             publishedSelection = null;
             if (!AbstractDungeon.isScreenUp && screen == CurrentScreen.NONE
                 && CombatAccess.isPlayerTurnIdle() && !AbstractDungeon.actionManager.usingCard
-                && AbstractDungeon.actionManager.monsterQueue.isEmpty() && !hasPendingEffects()) {
+                && AbstractDungeon.actionManager.monsterQueue.isEmpty() && !StatePacketEffects.hasPending()) {
                 trackedRoom = null;
                 publish(false);
             }
@@ -83,26 +73,9 @@ public final class CombatPacketPatches {
 
     private static void publish(boolean awaitingSelection) {
         try {
-            StatePacketSender.send(CombatPacketWriter.capture(awaitingSelection));
+            StatePacketSender.send(CombatPacketPacker.capture(awaitingSelection));
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to capture the combat state packet.", exception);
         }
-    }
-
-    private static boolean hasPendingEffects() {
-        return hasPendingEffects(AbstractDungeon.effectList) || hasPendingEffects(AbstractDungeon.effectsQueue)
-            || hasPendingEffects(AbstractDungeon.topLevelEffects) || hasPendingEffects(AbstractDungeon.topLevelEffectsQueue);
-    }
-
-    private static boolean hasPendingEffects(List<AbstractGameEffect> effects) {
-        for (AbstractGameEffect effect : effects) {
-            if (!effect.isDone && (effect instanceof GainPennyEffect || effect instanceof ObtainPotionEffect
-                || effect instanceof ExhaustCardEffect || effect instanceof ShowCardAndAddToDiscardEffect
-                || effect instanceof ShowCardAndAddToDrawPileEffect || effect instanceof FastCardObtainEffect
-                || effect instanceof ShowCardAndObtainEffect)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

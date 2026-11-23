@@ -327,9 +327,17 @@ BitWriter out = BitWriter.wrap(packet);
 
 ### 战斗状态包
 
-出牌、喝药或提交战斗选牌后，Mod 在 `AbstractDungeon.update()` 结束时检查战斗是否已结束、是否在等待选牌，或是否回到玩家可操作的闲时。普通包包含 `GAME`、`PLAYER`、`COMBAT`、`DECK_CARD`、四个战斗牌堆、`MONSTER` 和 `POTION`。等待选牌时附加 `SELECTION`，选择后继续等待后续效果结算。清场时退出战斗组包流程。
+出牌、喝药或提交战斗选牌后，Mod 在 `AbstractDungeon.update()` 结束时检查战斗是否已结束、是否在等待选牌，或是否回到玩家可操作的闲时。普通包包含 `GAME`、`PLAYER`、`COMBAT`、`DECK_CARD`、四个战斗牌堆、`MONSTER`、`POTION` 和当前节点 `MAP`。等待选牌时附加 `SELECTION`，选择后继续等待后续效果结算。清场时退出战斗组包流程。
 
 状态包组好后立即通过 UDP 发往 `127.0.0.1:18776`。接收端监听该地址和端口，每条数据报的载荷就是一个完整的二进制状态包。可通过游戏 JVM 参数 `-Dreallyfastmode.state.port=<port>` 更换目的端口。
+
+### 战后奖励包
+
+战后奖励页打开时和处理一次领取后，Mod 发送当前奖励列表。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `REWARD`。进入卡牌奖励或奖励遗物触发的网格选牌时，包额外包含 `SELECTION`。选取或跳过后返回奖励页，再发送一份更新，领取完则发送空的 `REWARD` 块。
+
+### 全量地图包
+
+每次进入新楼层时发一个全量地图包。新开局、读档和进入新一幕时，在地图可用的第一帧也发当前楼层。包包含 `GAME` 和全量 `MAP`，用 `GAME` 中的幕和楼层识别所属位置。第四幕沿用协议的固定地图标记，由解码器还原地图。
 
 ## 运行环境
 

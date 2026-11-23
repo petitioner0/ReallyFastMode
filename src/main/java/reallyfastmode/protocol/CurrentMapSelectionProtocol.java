@@ -4,6 +4,7 @@ package reallyfastmode.protocol;
 public final class CurrentMapSelectionProtocol {
     public static final int COORDINATE_BITS = 4;
     public static final int CURRENT_NODE_BITS = COORDINATE_BITS * 2;
+    public static final int CURRENT_NODE_BLOCK_BITS = MapProtocol.BLOCK_KIND_BITS + CURRENT_NODE_BITS;
     public static final int NO_PREVIOUS_ROW_WIRE_VALUE =
         (1 << COORDINATE_BITS) - 1;
 

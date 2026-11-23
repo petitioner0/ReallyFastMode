@@ -11,6 +11,12 @@ public final class MapBlockWriter {
     private MapBlockWriter() {
     }
 
+    static int bitSize(MapSnapshot map) {
+        int headerBits = MapProtocol.BLOCK_KIND_BITS + MapProtocol.IS_ACT_4_BITS;
+        return map.isAct4 ? headerBits : headerBits + MapProtocol.EMERALD_KEY_NODE_BITS
+            + MapProtocol.NODE_COUNT * (MapProtocol.NODE_WIRE_ID_BITS + MapProtocol.CONNECTIVITY_BITS);
+    }
+
     public static void write(BitWriter out, MapSnapshot map) {
         Objects.requireNonNull(out, "out");
         Objects.requireNonNull(map, "map");

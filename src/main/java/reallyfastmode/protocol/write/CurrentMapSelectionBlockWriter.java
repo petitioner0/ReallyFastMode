@@ -29,6 +29,6 @@ public final class CurrentMapSelectionBlockWriter {
         int coordinateBits = CurrentMapSelectionProtocol.CURRENT_NODE_BITS;
         int coordinates = (x << bits) | y;
         out.writeBits((MapProtocol.CURRENT_NODE_KIND << coordinateBits) | coordinates,
-            MapProtocol.BLOCK_KIND_BITS + coordinateBits);
+            CurrentMapSelectionProtocol.CURRENT_NODE_BLOCK_BITS);
     }
 }

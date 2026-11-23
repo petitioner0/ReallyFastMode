@@ -11,6 +11,10 @@ public final class PotionBlockWriter {
     private PotionBlockWriter() {
     }
 
+    static int bitSize(PotionSnapshot potions) {
+        return PotionProtocol.POTION_SLOTS_COUNT_BITS + potions.potionSlotsCount * PotionProtocol.POTION_WIRE_ID_BITS;
+    }
+
     public static void write(BitWriter out, PotionSnapshot potions) {
         Objects.requireNonNull(out, "out");
         validate(Objects.requireNonNull(potions, "potions"));

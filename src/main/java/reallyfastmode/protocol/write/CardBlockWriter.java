@@ -11,6 +11,14 @@ public final class CardBlockWriter {
     private CardBlockWriter() {
     }
 
+    static int bitSize(CardColumns cards) {
+        int bitsPerCard = CardProtocol.CARD_WIRE_ID_BITS + CardProtocol.COST_BITS + 1;
+        if (cards.layout == CardColumns.Layout.DECK) {
+            bitsPerCard += 3;
+        }
+        return CardProtocol.CARD_COUNT_BITS + cards.size * bitsPerCard;
+    }
+
     public static void write(BitWriter out, CardColumns cards) {
         Objects.requireNonNull(out, "out");
         validate(Objects.requireNonNull(cards, "cards"));

@@ -11,6 +11,15 @@ public final class PlayerBlockWriter {
     private PlayerBlockWriter() {
     }
 
+    static int bitSize(PlayerSnapshot player) {
+        return PlayerProtocol.FIXED_SCALAR_BITS
+            + player.maxOrbs * PlayerProtocol.ORB_WIRE_ID_BITS
+            + PlayerProtocol.POWER_ENTRY_COUNT_BITS
+            + player.powerWireId.length * (PlayerProtocol.POWER_WIRE_ID_BITS + PlayerProtocol.POWER_COUNT_BITS)
+            + PlayerProtocol.RELIC_ENTRY_COUNT_BITS
+            + player.relicWireId.length * (PlayerProtocol.RELIC_WIRE_ID_BITS + PlayerProtocol.RELIC_COUNT_BITS);
+    }
+
     public static void write(BitWriter out, PlayerSnapshot player) {
         Objects.requireNonNull(out, "out");
         validate(Objects.requireNonNull(player, "player"));
