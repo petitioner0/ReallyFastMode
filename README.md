@@ -298,7 +298,7 @@ PacketHeaderWriter.write(out, GameAccess.runId(), mask);
 
 `PacketDecoder.decode(packet, expectedRunId)` 支持全部 16 个槽位。它从 bit 偏移 `32` 开始，按槽位顺序读取掩码中置位的块，全部解码成功后返回末尾 bit 偏移。包头校验失败或字段值无效时抛出 `IllegalArgumentException`，块数据截断抛出 `BufferUnderflowException`。
 
-每个通过包头校验的包都有独立的 `PacketRecord`，`runId` 来自包头。通过 `game()`、`player()`、`combat()`、`deck()`、`hand()`、`drawPile()`、`discardPile()` 和 `exhaustPile()` 读取对应快照。缺席块返回 `null`，存在但为空的牌堆返回 `size` 为 `0` 的快照。`PacketDecoder.latestRecord()` 返回最近一次完整解码的记录，首次成功前返回 `null`。解码抛出异常时保留上一份记录。
+每个成功解码的包都有独立的 `PacketRecord`，`runId` 来自包头。通过 `game()`、`player()`、`combat()`、`deck()`、`hand()`、`drawPile()`、`discardPile()` 和 `exhaustPile()` 读取对应快照。这些块缺席时返回 `null`，存在但为空的牌堆返回 `size` 为 `0` 的快照。`PacketDecoder.latestRecord()` 返回最近一次完整解码的记录，首次成功前返回 `null`。解码抛出异常时保留上一份记录。
 
 解码记录将游戏 ID 还原为字符串（如 `Exordium`、`Lightning`）。未知或未收录的 ID 返回 `Unknown`。数值展开为 Java `int` 或 `int[]`，单比特标记读作 `0` 或 `1`，Power 层数和卡牌费用保留符号。
 
@@ -306,7 +306,9 @@ PacketHeaderWriter.write(out, GameAccess.runId(), mask);
 
 通过 `monsters()`、`potions()` 和 `selection()` 读取怪物、药水和选牌快照。怪物的 Power 列按怪物顺序拼接，每只怪物的条目数见 `powerEntryCount[]`。药水空槽读取为 `Empty`。
 
-Map 槽位的完整地图通过 `map()` 读取，当前坐标通过 `currentMapSelection()` 读取。完整地图的节点按 `y * 7 + x` 排列，连接展开为左、中、右三个 `0` / `1` 列。无翡翠钥匙时坐标为 `(-1, -1)`。Act 4 标记的 `isAct4` 为 `1`，节点和连接列为空。当前坐标的 `(0, -1)` 表示尚未选房间，`(-1, 15)` 表示 Boss 房。
+`map()` 返回同一 `runId` 最近一次成功解码的全量地图。当前节点包和缺少 `MAP` 槽位的包会沿用该地图，直到下一份全量地图成功解码。首次收到该对局的全量地图前，`map()` 返回 `null`。`currentMapSelection()` 只返回本包携带的当前坐标，缺席时返回 `null`。
+
+完整地图的节点按 `y * 7 + x` 排列，连接展开为左、中、右三个 `0` / `1` 列。无翡翠钥匙时坐标为 `(-1, -1)`。Act 4 标记的 `isAct4` 为 `1`，节点和连接列为空。当前坐标的 `(0, -1)` 表示尚未选房间，`(-1, 15)` 表示 Boss 房。
 
 `map().graph()` 返回地图的静态有向图。用 `entryNodes()` 获取入口，`nodeAt(x, y)` 查找房间，`successors()` 读取某个房间的出边。节点携带坐标、房间类型和 `hasEmeraldKey`。前三幕按包内连线建图，并将有效末排节点接到 `(-1, 15)` 的 Boss。Act 4 按原版固定布局建图，休息点、商店、精英和 Boss 依次相连，胜利房间位于 `(3, 4)`。
 
@@ -331,9 +333,11 @@ BitWriter out = BitWriter.wrap(packet);
 
 状态包组好后立即通过 UDP 发往 `127.0.0.1:18776`。接收端监听该地址和端口，每条数据报的载荷就是一个完整的二进制状态包。可通过游戏 JVM 参数 `-Dreallyfastmode.state.port=<port>` 更换目的端口。
 
-### 战后奖励包
+### 奖励包
 
-战后奖励页打开时和处理一次领取后，Mod 发送当前奖励列表。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `REWARD`。进入卡牌奖励或奖励遗物触发的网格选牌时，包额外包含 `SELECTION`。选取或跳过后返回奖励页，再发送一份更新，领取完则发送空的 `REWARD` 块。
+奖励页打开时和处理一次领取后，Mod 发送当前奖励列表。战后奖励和普通宝箱共用此流程。Boss 宝箱打开时，`REWARD` 按 `claimBossRelic(relicIndex)` 的顺序列出候选遗物。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `REWARD`。
+
+进入卡牌奖励或遗物触发的选牌界面时，会追加一份带 `SELECTION` 的奖励包。Boss 遗物已选定时，该包的 `REWARD` 为空。选牌完成并结算后，发送更新后的玩家状态和当前奖励列表。奖励领完或 Boss 遗物候选页被关闭时，`REWARD` 为空。遗物开启新的奖励列表时，按新列表发包。
 
 ### 全量地图包
 
@@ -342,6 +346,16 @@ BitWriter out = BitWriter.wrap(packet);
 ### 事件包
 
 每当事件的下一组选项可用时，Mod 发送事件包。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `EVENT`。选项打开选牌界面时，在候选就绪后发带 `SELECTION` 的包。等待效果结算或事件结束时，只有出现新的可操作选项才会继续发事件包。
+
+### 火堆包
+
+进入火堆后，Mod 在营火菜单就绪时发送包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `REST` 的包。锻造网格或捕梦网的卡牌奖励候选就绪时，再发一包，附加 `SELECTION`，并将 `REST` 的可用操作掩码置为 `0`。
+
+### 商店包
+
+商店界面每次打开后，在第一次仍处于 `SHOP` 的界面更新结束时发送一份商店包。进房自动开店和之后重新打开都走这个时点。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `SHOP`，其中 `SHOP` 列出当前商品、价格和删牌服务状态。
+
+原版处理一次购买卡牌、遗物、药水或删牌后，也会在相关效果结算且 `SHOP` 界面可用时发一包。操作触发选牌时，等返回商店再发送结算后的状态。操作结算与重新打开商店发生在同一次更新时，共用一包。
 
 ## 运行环境
 

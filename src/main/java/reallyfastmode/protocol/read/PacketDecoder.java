@@ -35,12 +35,13 @@ public final class PacketDecoder {
 
     /**
      * Decodes every present block, publishes the completed record, and returns the final bit offset.
+     * If the packet carries no full map, the record retains the previous full map for the same run.
      *
      * @throws IllegalArgumentException if the packet header is missing, truncated, or has the wrong run ID,
      *         if the expected run ID is outside 0–65535, or if a block contains invalid values
      * @throws BufferUnderflowException if a block extends past the end of the packet
      */
-    public static int decode(byte[] packet, int expectedRunId) {
+    public static synchronized int decode(byte[] packet, int expectedRunId) {
         Header header = tryReadHeader(packet, expectedRunId);
         if (header == null) {
             if (packet == null || packet.length < PacketHeaderProtocol.HEADER_BYTES) {
@@ -55,6 +56,10 @@ public final class PacketDecoder {
             if (header.hasBlock(slot)) {
                 BLOCK_DECODERS[slot].decode(in, record);
             }
+        }
+        PacketRecord previous = latestRecord;
+        if (record.map == null && previous != null && previous.runId == record.runId) {
+            record.map = previous.map;
         }
         latestRecord = record;
         return in.bitPosition();

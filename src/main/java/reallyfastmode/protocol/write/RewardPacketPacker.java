@@ -25,7 +25,7 @@ import java.util.List;
 
 import static reallyfastmode.protocol.PacketHeaderProtocol.blockBit;
 
-/** Captures post-combat rewards and the player's state in protocol slot order. */
+/** Captures rewards and the player's state in protocol slot order. */
 public final class RewardPacketPacker {
     private static final int REWARD_MASK = blockBit(ProtocolSlots.GAME)
         | blockBit(ProtocolSlots.PLAYER)
@@ -39,10 +39,18 @@ public final class RewardPacketPacker {
 
     /** Must be called on the render thread with the reward screen's current list. */
     public static byte[] capture(List<RewardItem> rewardItems, boolean awaitingSelection) {
+        return capture(RewardColumnsBuilder.build(rewardItems), awaitingSelection);
+    }
+
+    /** Must be called on the render thread while the Boss relic choices are available. */
+    public static byte[] captureBossReward() {
+        return capture(RewardColumnsBuilder.build(), false);
+    }
+
+    private static byte[] capture(RewardColumns rewards, boolean awaitingSelection) {
         PlayerSnapshot player = PlayerSnapshotBuilder.build();
         CardColumns deck = CardColumnsBuilder.buildDeck(CardAccess.masterDeck());
         PotionSnapshot potions = PotionSnapshotBuilder.build();
-        RewardColumns rewards = RewardColumnsBuilder.build(rewardItems);
         SelectionSnapshot selection = awaitingSelection ? SelectionSnapshotBuilder.build() : null;
 
         int mask = REWARD_MASK;

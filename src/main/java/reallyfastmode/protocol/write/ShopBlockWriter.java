@@ -11,6 +11,14 @@ public final class ShopBlockWriter {
     private ShopBlockWriter() {
     }
 
+    static int bitSize(ShopSnapshot shop) {
+        return ShopProtocol.CARDS_COUNT_BITS + ShopProtocol.PURGE_AVAILABLE_BITS
+            + ShopProtocol.ACTUAL_PURGE_COST_BITS + ShopProtocol.RELIC_COUNT_BITS + ShopProtocol.POTION_COUNT_BITS
+            + shop.cardsCount * (ShopProtocol.CARD_WIRE_ID_BITS + ShopProtocol.PRICE_BITS)
+            + shop.relicCount * (ShopProtocol.RELIC_WIRE_ID_BITS + ShopProtocol.PRICE_BITS)
+            + shop.potionCount * (ShopProtocol.POTION_WIRE_ID_BITS + ShopProtocol.PRICE_BITS);
+    }
+
     public static void write(BitWriter out, ShopSnapshot shop) {
         Objects.requireNonNull(out, "out");
         validate(Objects.requireNonNull(shop, "shop"));

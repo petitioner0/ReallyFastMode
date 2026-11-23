@@ -4,7 +4,7 @@ import reallyfastmode.protocol.build.CardColumns.Layout;
 import reallyfastmode.protocol.build.CombatSnapshot;
 import reallyfastmode.protocol.build.CurrentMapSelectionSnapshot;
 
-/** Holds the decoded data of a single state packet. Absent blocks have null snapshots. */
+/** Holds the decoded snapshots for one packet and the latest full map for its run. */
 public final class PacketRecord {
     public final int runId;
     Game game;
@@ -73,6 +73,7 @@ public final class PacketRecord {
         return selection;
     }
 
+    /** Returns the latest full map for this run as of this packet, or null before receiving one. */
     public DungeonMap map() {
         return map;
     }
