@@ -2,7 +2,9 @@ package reallyfastmode;
 
 import basemod.BaseMod;
 import basemod.interfaces.PostInitializeSubscriber;
+import com.badlogic.gdx.Gdx;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
+import reallyfastmode.cli.GameCliServer;
 import reallyfastmode.config.FastModeConfig;
 import reallyfastmode.patches.access.RunIdPatches;
 import reallyfastmode.patches.vfx.AdvancedCombatEffectPatches;
@@ -24,5 +26,6 @@ public final class ReallyFastMode implements PostInitializeSubscriber {
     public void receivePostInitialize() {
         AdvancedCombatEffectPatches.installFilteringLists();
         FastModeSettingsPanel.register();
+        GameCliServer.start(Gdx.app);
     }
 }

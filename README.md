@@ -34,7 +34,7 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 - `endTurn`：触发原版结束回合按钮流程，排队执行玩家回合收尾和敌方回合。
 - `selectCards`：按当前界面选择手牌、网格卡牌、卡牌奖励或商店卡牌，战斗外也可调用。
 - `skipCardSelection`：在原版允许跳过当前卡牌奖励时返回上一界面。
-- 所有命令都返回 `CombatApiResult`，其中包含成功状态、错误码和说明消息。
+- 所有战斗命令都返回 `CombatApiResult`，其中包含成功状态、错误码和说明消息。
 
 标识规则：
 
@@ -44,7 +44,37 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 
 可以通过 `CombatIdentifiers.cardId(card)` 和 `CombatIdentifiers.targetId(monster)` 生成对应标识。
 
-> 战斗 API 会直接读取并修改《杀戮尖塔》的全局状态，因此必须在游戏渲染线程调用。目前项目没有提供 HTTP、WebSocket 或其他外部传输层。
+> 游戏内 Java API 必须在渲染线程调用。通过 CLI 调用时，Mod 会将命令交给渲染线程执行。
+
+### CLI
+
+启动加载了 ReallyFastMode 的游戏后，在终端用同一份 Mod JAR 运行 CLI。命令名和参数顺序与 Java 方法一致。
+
+```sh
+java -jar ReallyFastMode.jar --help
+java -jar ReallyFastMode.jar startRun 18ISL35FYK4 1 0 2
+java -jar ReallyFastMode.jar selectNode -1 15
+java -jar ReallyFastMode.jar selectCards "$firstCardUuid" "$secondCardUuid"
+java -jar ReallyFastMode.jar proceed
+```
+
+| 命令 | 位置参数 |
+|---|---|
+| `startRun` | `seed runId [ascensionLevel [characterId]]` |
+| `playCard` | `cardId [targetId]` |
+| `usePotion` | `potionSlot [targetId]` |
+| `endTurn` | 无 |
+| `selectCards` | `cardId ...`，每张牌的 UUID 是一个参数，允许零参数 |
+| `skipCardSelection` | 无 |
+| `selectOption` | 事件的整数序号，或 `REST`、`SMITH`、`DIG`、`LIFT`、`TOKE`、`RECALL` |
+| `selectNode` | `x y` |
+| `claimReward` | `rewardIndex` |
+| `openChest` | 无 |
+| `claimBossRelic` | `relicIndex` |
+| `proceed` | 无 |
+| `openCardRemoval` | 无 |
+
+CLI 默认连接本机 `127.0.0.1:18775`。需要更换端口时，给游戏 JVM 和 CLI JVM 设置相同的 `-Dreallyfastmode.cli.port=<port>`。CLI 成功时向标准输出写入 `ok` 和可用的说明，退出码为 `0`。游戏拒绝命令时向标准错误输出错误码和说明，退出码为 `1`。CLI 参数数量、命令名称或连接错误的退出码为 `2`。命令排队成功后，游戏状态变化仍按原版更新时机发生。
 
 ### 战斗内外选牌 API
 
