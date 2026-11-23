@@ -12,6 +12,7 @@ import reallyfastmode.protocol.VanillaCatalog.VanillaEventCatalog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /** Reads the event and dialog options currently presented to the player. */
 public final class EventAccess {
@@ -32,15 +33,17 @@ public final class EventAccess {
     }
 
     public static int wireId() {
-        AbstractEvent event = requiredEvent();
+        return wireId(requiredEvent());
+    }
+
+    /** Reads the event ID even after its dialog has closed or changed the room phase. */
+    public static int wireId(AbstractEvent event) {
+        Objects.requireNonNull(event, "event");
         try {
             String eventId = (String) event.getClass().getField("ID").get(null);
             return VanillaEventCatalog.wireId(eventId);
         } catch (NoSuchFieldException exception) {
-            throw new IllegalArgumentException(
-                event.getClass().getName() + " has no public static ID field",
-                exception
-            );
+            return VanillaEventCatalog.UNKNOWN.wireId;
         } catch (IllegalAccessException exception) {
             throw new IllegalStateException(
                 "Cannot read " + event.getClass().getName() + ".ID",

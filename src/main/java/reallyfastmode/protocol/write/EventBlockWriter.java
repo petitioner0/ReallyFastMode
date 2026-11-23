@@ -11,6 +11,10 @@ public final class EventBlockWriter {
     private EventBlockWriter() {
     }
 
+    static int bitSize(EventSnapshot event) {
+        return EventProtocol.FIXED_BITS + event.optionsEntryCount * EventProtocol.OPTIONS_APPLICABILITY_BITS;
+    }
+
     public static void write(BitWriter out, EventSnapshot event) {
         Objects.requireNonNull(out, "out");
         validate(Objects.requireNonNull(event, "event"));
