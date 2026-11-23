@@ -63,16 +63,18 @@ CombatApi.selectCards(deckCardUuid); // 选择删牌并由商店扣费
 
 ### 整局命令 API
 
-`RunApi` 独立于 `CombatApi`，负责整局生命周期命令。当前可以从主菜单直接启动指定种子和 `RunID` 的铁甲战士普通难度对局：
+`RunApi` 独立于 `CombatApi`，负责整局生命周期命令。可在主菜单指定种子、`RunID`、进阶等级和角色。
 
 ```java
 RunApiResult result = RunApi.startRun(seed, runId);
 RunApiResult ascensionResult = RunApi.startRun(seed, runId, ascensionLevel);
+RunApiResult characterResult = RunApi.startRun(seed, runId, ascensionLevel, characterId);
 ```
 
 - 仅当没有正在运行或正在启动的 Run 时接受命令；否则返回 `run_already_active`。
 - 游戏尚未进入可用主菜单状态时返回 `game_not_ready`。
-- 角色固定为铁甲战士；两参数版本关闭进阶，三参数版本开启指定的 `1`–`20` 级进阶，其他值返回 `invalid_ascension_level`。
+- `characterId` 的 `0`、`1`、`2`、`3` 分别对应铁甲战士、静默猎手、故障机器人和观者。其他值返回 `invalid_character_id`。
+- 四参数版本接受 `0`–`20` 级进阶，`0` 表示普通难度。两参数和三参数版本默认使用铁甲战士，分别支持普通难度和 `1`–`20` 级进阶。进阶越界返回 `invalid_ascension_level`。
 - 每日挑战、自定义挑战和无尽模式始终关闭。
 - 跳过主菜单淡出、第一幕标题转场和开局淡入；不会跳过涅奥奖励等会改变玩法结果的交互。
 - 原版 `AbstractDungeon` 会被注入公开的 `int RunID` 字段及 `getRunID()`；同一局跨幕创建的新 dungeon 实例保持相同 `RunID`。

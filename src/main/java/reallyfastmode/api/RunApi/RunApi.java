@@ -14,6 +14,13 @@ import reallyfastmode.protocol.PacketHeaderProtocol;
 /** Commands that manage a complete run rather than an individual combat. */
 public final class RunApi {
     private static final Logger LOGGER = LogManager.getLogger(RunApi.class.getName());
+    private static final int DEFAULT_CHARACTER_ID = 0;
+    private static final AbstractPlayer.PlayerClass[] VANILLA_CHARACTERS = {
+        AbstractPlayer.PlayerClass.IRONCLAD,
+        AbstractPlayer.PlayerClass.THE_SILENT,
+        AbstractPlayer.PlayerClass.DEFECT,
+        AbstractPlayer.PlayerClass.WATCHER
+    };
 
     private RunApi() {
     }
@@ -25,15 +32,7 @@ public final class RunApi {
      * This method must be called on the game render thread.
      */
     public static synchronized RunApiResult startRun(String seed, int runId) {
-        Long numericSeed = parseSeed(seed);
-        if (numericSeed == null) {
-            return RunApiResult.error(
-                    "invalid_seed",
-                    "seed must be a valid Slay the Spire seed."
-            );
-        }
-
-        return startRunInternal(numericSeed, runId, 0);
+        return startRun(seed, runId, 0, DEFAULT_CHARACTER_ID);
     }
 
     /**
@@ -54,6 +53,31 @@ public final class RunApi {
             );
         }
 
+        return startRun(seed, runId, ascensionLevel, DEFAULT_CHARACTER_ID);
+    }
+
+    /**
+     * Starts a run as Ironclad (0), Silent (1), Defect (2), or Watcher (3).
+     * Ascension level 0 starts a normal run. Call on the game render thread.
+     */
+    public static synchronized RunApiResult startRun(
+            String seed,
+            int runId,
+            int ascensionLevel,
+            int characterId
+    ) {
+        if (ascensionLevel < 0 || ascensionLevel > 20) {
+            return RunApiResult.error(
+                    "invalid_ascension_level",
+                    "ascensionLevel must be between 0 and 20."
+            );
+        }
+        if (characterId < 0 || characterId >= VANILLA_CHARACTERS.length) {
+            return RunApiResult.error(
+                    "invalid_character_id",
+                    "characterId must be between 0 and 3."
+            );
+        }
         Long numericSeed = parseSeed(seed);
         if (numericSeed == null) {
             return RunApiResult.error(
@@ -62,7 +86,7 @@ public final class RunApi {
             );
         }
 
-        return startRunInternal(numericSeed, runId, ascensionLevel);
+        return startRunInternal(numericSeed, runId, ascensionLevel, VANILLA_CHARACTERS[characterId]);
     }
 
     /**
@@ -93,7 +117,8 @@ public final class RunApi {
     private static RunApiResult startRunInternal(
             long seed,
             int runId,
-            int ascensionLevel
+            int ascensionLevel,
+            AbstractPlayer.PlayerClass character
     ) {
         if (!PacketHeaderProtocol.isValidRunId(runId)) {
             return RunApiResult.error(
@@ -112,8 +137,7 @@ public final class RunApi {
             CardCrawlGame.loadingSave = false;
             CardCrawlGame.saveFile = null;
             CardCrawlGame.trial = null;
-            CardCrawlGame.chosenCharacter =
-                    AbstractPlayer.PlayerClass.IRONCLAD;
+            CardCrawlGame.chosenCharacter = character;
 
             Settings.seed = Long.valueOf(seed);
             Settings.seedSet = true;
@@ -136,7 +160,9 @@ public final class RunApi {
             CardCrawlGame.mainMenuScreen.fadedOut = true;
 
             return RunApiResult.success(
-                    "Ironclad run queued with seed "
+                    "Run queued for "
+                            + character
+                            + " with seed "
                             + SeedHelper.getString(seed)
                             + ", RunID "
                             + runId
