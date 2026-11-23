@@ -2,48 +2,67 @@ package reallyfastmode.protocol.read;
 
 import reallyfastmode.protocol.PacketHeaderProtocol;
 import reallyfastmode.protocol.ProtocolSlots;
+import reallyfastmode.protocol.io.BitReader;
+
+import java.nio.BufferUnderflowException;
 
 /** Reads a state packet header and dispatches its present blocks in slot order. */
 public final class PacketDecoder {
     private static final BlockDecoder[] BLOCK_DECODERS = new BlockDecoder[ProtocolSlots.SIZE];
+    private static volatile PacketRecord latestRecord;
 
     static {
-        // Each placeholder consumes zero bits until its block decoder is implemented.
-        BLOCK_DECODERS[ProtocolSlots.GAME] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.PLAYER] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.COMBAT] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.DECK_CARD] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.HAND_CARD] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.DRAW_PILE_CARD] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.DISCARD_PILE_CARD] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.EXHAUST_PILE_CARD] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.MONSTER] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.POTION] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.SELECTION] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.MAP] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.REWARD] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.EVENT] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.SHOP] = (packet, bitOffset) -> bitOffset;
-        BLOCK_DECODERS[ProtocolSlots.REST] = (packet, bitOffset) -> bitOffset;
+        BLOCK_DECODERS[ProtocolSlots.GAME] = (in, record) -> record.game = GameBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.PLAYER] = (in, record) -> record.player = PlayerBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.COMBAT] = (in, record) -> record.combat = CombatBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.DECK_CARD] = (in, record) -> record.deck = CardBlockDecoder.readDeck(in);
+        BLOCK_DECODERS[ProtocolSlots.HAND_CARD] = (in, record) -> record.hand = CardBlockDecoder.readCombat(in);
+        BLOCK_DECODERS[ProtocolSlots.DRAW_PILE_CARD] = (in, record) -> record.drawPile = CardBlockDecoder.readCombat(in);
+        BLOCK_DECODERS[ProtocolSlots.DISCARD_PILE_CARD] = (in, record) -> record.discardPile = CardBlockDecoder.readCombat(in);
+        BLOCK_DECODERS[ProtocolSlots.EXHAUST_PILE_CARD] = (in, record) -> record.exhaustPile = CardBlockDecoder.readCombat(in);
+        BLOCK_DECODERS[ProtocolSlots.MONSTER] = (in, record) -> record.monsters = MonsterBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.POTION] = (in, record) -> record.potions = PotionBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.SELECTION] = (in, record) -> record.selection = SelectionBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.MAP] = MapBlockDecoder::decode;
+        BLOCK_DECODERS[ProtocolSlots.REWARD] = (in, record) -> record.rewards = RewardBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.EVENT] = (in, record) -> record.event = EventBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.SHOP] = (in, record) -> record.shop = ShopBlockDecoder.read(in);
+        BLOCK_DECODERS[ProtocolSlots.REST] = (in, record) -> record.rest = RestBlockDecoder.read(in);
     }
 
     private PacketDecoder() {
     }
 
-    /** Returns the final bit offset, or {@code -1} if the header is rejected. */
+    /**
+     * Decodes every present block, publishes the completed record, and returns the final bit offset.
+     *
+     * @throws IllegalArgumentException if the packet header is missing, truncated, or has the wrong run ID,
+     *         if the expected run ID is outside 0–65535, or if a block contains invalid values
+     * @throws BufferUnderflowException if a block extends past the end of the packet
+     */
     public static int decode(byte[] packet, int expectedRunId) {
         Header header = tryReadHeader(packet, expectedRunId);
         if (header == null) {
-            return -1;
+            if (packet == null || packet.length < PacketHeaderProtocol.HEADER_BYTES) {
+                throw new IllegalArgumentException("Packet header is missing or truncated");
+            }
+            throw new IllegalArgumentException("Packet runId does not match expectedRunId=" + expectedRunId);
         }
 
-        int bitOffset = header.bodyOffsetBytes() * Byte.SIZE;
+        PacketRecord record = new PacketRecord(header.runId);
+        BitReader in = new BitReader(packet, header.bodyOffsetBytes() * Byte.SIZE);
         for (int slot = 0; slot < BLOCK_DECODERS.length; slot++) {
             if (header.hasBlock(slot)) {
-                bitOffset = BLOCK_DECODERS[slot].decode(packet, bitOffset);
+                BLOCK_DECODERS[slot].decode(in, record);
             }
         }
-        return bitOffset;
+        latestRecord = record;
+        return in.bitPosition();
+    }
+
+    /** Returns the latest completed packet record, or {@code null} before the first acceptance. */
+    public static PacketRecord latestRecord() {
+        return latestRecord;
     }
 
     /**
@@ -77,8 +96,7 @@ public final class PacketDecoder {
 
     @FunctionalInterface
     private interface BlockDecoder {
-        /** Returns the absolute bit offset immediately after this block. */
-        int decode(byte[] packet, int bitOffset);
+        void decode(BitReader in, PacketRecord record);
     }
 
     public static final class Header {

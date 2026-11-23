@@ -231,7 +231,21 @@ PacketHeaderWriter.write(out, GameAccess.runId(), mask);
 
 `PacketDecoder.tryReadHeader(packet, expectedRunId)` 只检查 4 字节包头。包头缺失、不足 4 字节或 `run_id` 与预期不一致时返回 `null`。通过时返回 `Header`，可用 `hasBlock(slot)` 查询块是否存在，并从原数组的 `bodyOffsetBytes()` 位置继续读正文。
 
-`PacketDecoder.decode(packet, expectedRunId)` 在包头通过后从 bit 偏移 `32` 开始，按槽位编号递增调用掩码中置位的块解码器，并把每次返回的绝对 bit 偏移传给下一个解码器。包头拒收时返回 `-1`，通过时返回最后的 bit 偏移。当前 16 个解码入口均为占位，直接返回收到的偏移。
+`PacketDecoder.decode(packet, expectedRunId)` 支持全部 16 个槽位。它从 bit 偏移 `32` 开始，按槽位顺序读取掩码中置位的块，全部解码成功后返回末尾 bit 偏移。包头校验失败或字段值无效时抛出 `IllegalArgumentException`，块数据截断抛出 `BufferUnderflowException`。
+
+每个通过包头校验的包都有独立的 `PacketRecord`，`runId` 来自包头。通过 `game()`、`player()`、`combat()`、`deck()`、`hand()`、`drawPile()`、`discardPile()` 和 `exhaustPile()` 读取对应快照。缺席块返回 `null`，存在但为空的牌堆返回 `size` 为 `0` 的快照。`PacketDecoder.latestRecord()` 返回最近一次完整解码的记录，首次成功前返回 `null`。解码抛出异常时保留上一份记录。
+
+解码记录将游戏 ID 还原为字符串（如 `Exordium`、`Lightning`）。未知或未收录的 ID 返回 `Unknown`。数值展开为 Java `int` 或 `int[]`，单比特标记读作 `0` 或 `1`，Power 层数和卡牌费用保留符号。
+
+四种战斗牌堆使用同一布局，依次读取数量、卡牌 ID 列、`costForTurn` 列和升级标记列。瓶装标记只在 `deck()` 中读取。
+
+通过 `monsters()`、`potions()` 和 `selection()` 读取怪物、药水和选牌快照。怪物的 Power 列按怪物顺序拼接，每只怪物的条目数见 `powerEntryCount[]`。药水空槽读取为 `Empty`。
+
+Map 槽位的完整地图通过 `map()` 读取，当前坐标通过 `currentMapSelection()` 读取。完整地图的节点按 `y * 7 + x` 排列，连接展开为左、中、右三个 `0` / `1` 列。无翡翠钥匙时坐标为 `(-1, -1)`。Act 4 标记的 `isAct4` 为 `1`，节点和连接列为空。当前坐标的 `(0, -1)` 表示尚未选房间，`(-1, 15)` 表示 Boss 房。
+
+`map().graph()` 返回地图的静态有向图。用 `entryNodes()` 获取入口，`nodeAt(x, y)` 查找房间，`successors()` 读取某个房间的出边。节点携带坐标、房间类型和 `hasEmeraldKey`。前三幕按包内连线建图，并将有效末排节点接到 `(-1, 15)` 的 Boss。Act 4 按原版固定布局建图，休息点、商店、精英和 Boss 依次相连，胜利房间位于 `(3, 4)`。
+
+通过 `rewards()`、`event()`、`shop()` 和 `rest()` 读取奖励、事件、商店和休息点。奖励的遗物、药水和金额列各自按对应奖励的出现顺序排列，`GOLD` 和 `STOLEN_GOLD` 共用金额列。事件选项用 `0` / `1` 标记可用性。商店的 `purgeCost` 是把编码值按每单位 25 金币换算后的金额，精度为 25 金币。休息点的 `availableOptions` 按掩码位从低到高列出可用选项。
 
 ### 零拷贝 packet 输出
 
