@@ -23,7 +23,7 @@ import reallyfastmode.protocol.io.BitWriter;
 
 import static reallyfastmode.protocol.PacketHeaderProtocol.blockBit;
 
-/** Packs the current campfire or its follow-up card selection in slot order. */
+/** Packs the campfire menu, card selection, or completed room in slot order. */
 public final class RestPacketPacker {
     private static final int REST_MASK = blockBit(ProtocolSlots.GAME)
         | blockBit(ProtocolSlots.PLAYER)
@@ -37,10 +37,19 @@ public final class RestPacketPacker {
 
     /** Must be called on the render thread in the current rest room. */
     public static byte[] capture(boolean awaitingSelection) {
+        RestSnapshot rest = awaitingSelection ? new RestSnapshot(0) : RestSnapshotBuilder.build();
+        return capture(rest, awaitingSelection);
+    }
+
+    /** Captures the settled player state after the campfire options are spent. */
+    public static byte[] captureSettlement() {
+        return capture(new RestSnapshot(0), false);
+    }
+
+    private static byte[] capture(RestSnapshot rest, boolean awaitingSelection) {
         PlayerSnapshot player = PlayerSnapshotBuilder.build();
         CardColumns deck = CardColumnsBuilder.buildDeck(CardAccess.masterDeck());
         PotionSnapshot potions = PotionSnapshotBuilder.build();
-        RestSnapshot rest = awaitingSelection ? new RestSnapshot(0) : RestSnapshotBuilder.build();
         SelectionSnapshot selection = awaitingSelection ? SelectionSnapshotBuilder.build() : null;
 
         int mask = REST_MASK;

@@ -2,6 +2,7 @@ package reallyfastmode.access;
 
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon.CurrentScreen;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.shop.ShopScreen;
@@ -20,9 +21,14 @@ public final class ShopAccess {
     }
 
     private static boolean active() {
-        return AbstractDungeon.screen == AbstractDungeon.CurrentScreen.SHOP
-            && AbstractDungeon.shopScreen != null
-            && AbstractDungeon.shopScreen.isActive;
+        return AbstractDungeon.shopScreen != null && AbstractDungeon.shopScreen.isActive
+            && (AbstractDungeon.screen == CurrentScreen.SHOP || isCardRemovalOpen());
+    }
+
+    public static boolean isCardRemovalOpen() {
+        return AbstractDungeon.isScreenUp && AbstractDungeon.screen == CurrentScreen.GRID
+            && AbstractDungeon.previousScreen == CurrentScreen.SHOP && AbstractDungeon.gridSelectScreen != null
+            && AbstractDungeon.gridSelectScreen.forPurge;
     }
 
     public static List<AbstractCard> coloredCards() {
