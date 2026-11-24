@@ -1,7 +1,8 @@
 package reallyfastmode.patches.cards;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.evacipated.cardcrawl.modthespire.lib.SpireInstrumentPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch2;
-import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePrefixPatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireReturn;
 import com.megacrit.cardcrawl.cards.AbstractCard;
@@ -11,19 +12,30 @@ import com.megacrit.cardcrawl.cards.SoulGroup;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import javassist.CannotCompileException;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
 import reallyfastmode.config.FastModeConfig;
 
 public final class CardMotionPatches {
     private CardMotionPatches() {
     }
 
-    @SpirePatch2(clz = AbstractPlayer.class, method = "useCard")
+    @SpirePatch2(clz = AbstractPlayer.class, method = "renderHand", paramtypez = {SpriteBatch.class})
     public static class UsedCardRenderPatch {
-        @SpirePostfixPatch
-        public static void stopRendering(AbstractPlayer __instance) {
-            if (FastModeConfig.isFastModeEnabled()) {
-                __instance.cardInUse = null;
-            }
+        @SpireInstrumentPatch
+        public static ExprEditor skipUsedCardRender() {
+            return new ExprEditor() {
+                @Override
+                public void edit(MethodCall call) throws CannotCompileException {
+                    if (AbstractCard.class.getName().equals(call.getClassName())
+                        && "render".equals(call.getMethodName())) {
+                        // Queued card effects need cardInUse until vanilla cleanup runs.
+                        call.replace("{ if (!" + FastModeConfig.class.getName()
+                            + ".isFastModeEnabled() || $0 != this.cardInUse) { $proceed($$); } }");
+                    }
+                }
+            };
         }
     }
 
