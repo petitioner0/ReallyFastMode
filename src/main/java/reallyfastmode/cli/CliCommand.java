@@ -3,10 +3,10 @@ package reallyfastmode.cli;
 /** The exposed method names and their positional argument counts. */
 enum CliCommand {
     START_RUN("startRun seed runId [ascensionLevel [characterId]]", 2, 4),
-    PLAY_CARD("playCard cardId [targetId]", 1, 2),
+    PLAY_CARD("playCard cardIndex [targetId]", 1, 2),
     USE_POTION("usePotion potionSlot [targetId]", 1, 2),
     END_TURN("endTurn", 0),
-    SELECT_CARDS("selectCards [cardId ...]", 0, CliWire.MAX_ARGUMENTS - 1),
+    SELECT_CARDS("selectCards [cardIndex ...]", 0, CliWire.MAX_ARGUMENTS - 1),
     SKIP_CARD_SELECTION("skipCardSelection", 0),
     SELECT_OPTION("selectOption optionIndex|restOption", 1),
     SELECT_NODE("selectNode x y", 2),

@@ -14,7 +14,7 @@ import reallyfastmode.api.ShopApi.ShopApi;
 import reallyfastmode.cli.CliWire.Reply;
 import reallyfastmode.protocol.VanillaCatalog.VanillaRestOptionCatalog;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /** Routes CLI requests to game APIs on the render thread. */
@@ -29,13 +29,13 @@ final class GameCommandDispatcher {
                     RunApiResult run = startRun(args);
                     return new Reply(run.isSuccess(), run.getCode(), run.getMessage());
                 case PLAY_CARD:
-                    return reply(CombatApi.playCard(args[1], target(args)));
+                    return reply(CombatApi.playCardByIndex(integer(args[1], "cardIndex"), target(args)));
                 case USE_POTION:
                     return reply(CombatApi.usePotion(integer(args[1], "potionSlot"), target(args)));
                 case END_TURN:
                     return reply(CombatApi.endTurn());
                 case SELECT_CARDS:
-                    return reply(CombatApi.selectCards(Arrays.copyOfRange(args, 1, args.length)));
+                    return reply(CombatApi.selectCardsByIndex(cardIndices(args)));
                 case SKIP_CARD_SELECTION:
                     return reply(CombatApi.skipCardSelection());
                 case SELECT_OPTION:
@@ -92,6 +92,14 @@ final class GameCommandDispatcher {
         return args.length == 3 ? args[2] : null;
     }
 
+    private static int[] cardIndices(String[] args) {
+        int[] indices = new int[args.length - 1];
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] = integer(args[i + 1], "cardIndex");
+        }
+        return indices;
+    }
+
     private static int integer(String value, String parameter) {
         try {
             return Integer.parseInt(value);
@@ -101,7 +109,12 @@ final class GameCommandDispatcher {
     }
 
     private static Reply reply(CombatApiResult result) {
-        return new Reply(result.isSuccess(), result.getCode(), result.getMessage());
+        String message = result.getMessage();
+        List<String> selectedCardNames = result.getSelectedCardNames();
+        if (!selectedCardNames.isEmpty()) {
+            message += " Selected cards [" + String.join(", ", selectedCardNames) + "]";
+        }
+        return new Reply(result.isSuccess(), result.getCode(), message);
     }
 
     private static Reply reply(GameCommandResult result) {

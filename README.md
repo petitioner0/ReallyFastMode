@@ -50,23 +50,24 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 
 ### CLI
 
-启动加载了 ReallyFastMode 的游戏后，在终端用同一份 Mod JAR 运行 CLI。命令名和参数顺序与 Java 方法一致。
+启动加载了 ReallyFastMode 的游戏后，在终端用同一份 Mod JAR 运行 CLI。
 
 ```sh
 java -jar ReallyFastMode.jar --help
 java -jar ReallyFastMode.jar startRun 18ISL35FYK4 1 0 2
 java -jar ReallyFastMode.jar selectNode -1 15
-java -jar ReallyFastMode.jar selectCards "$firstCardUuid" "$secondCardUuid"
+java -jar ReallyFastMode.jar playCard 0 monster:0
+java -jar ReallyFastMode.jar selectCards 0 2
 java -jar ReallyFastMode.jar proceed
 ```
 
 | 命令 | 位置参数 |
 |---|---|
 | `startRun` | `seed runId [ascensionLevel [characterId]]` |
-| `playCard` | `cardId [targetId]` |
+| `playCard` | `cardIndex [targetId]`，对应战斗状态包 `HAND_CARD` 的零基序号 |
 | `usePotion` | `potionSlot [targetId]` |
 | `endTurn` | 无 |
-| `selectCards` | `cardId ...`，每张牌的 UUID 是一个参数，允许零参数 |
+| `selectCards` | `[cardIndex ...]`，对应 `SELECTION` 候选的零基序号，商店买牌使用 `SHOP` 的卡牌列表 |
 | `skipCardSelection` | 无 |
 | `selectOption` | 事件的整数序号，或 `REST`、`SMITH`、`DIG`、`LIFT`、`TOKE`、`RECALL` |
 | `selectNode` | `x y` |
@@ -75,6 +76,8 @@ java -jar ReallyFastMode.jar proceed
 | `claimBossRelic` | `relicIndex` |
 | `proceed` | 无 |
 | `openCardRemoval` | 无 |
+
+`selectCards` 按候选顺序提交并在成功回执中显示牌名。例如 `selectCards 2 0` 会先选第 1 张，再选第 3 张。允许零张选择、确认预览或确认整组卡牌时，可省略序号。
 
 CLI 默认连接本机 `127.0.0.1:18775`。需要更换端口时，给游戏 JVM 和 CLI JVM 设置相同的 `-Dreallyfastmode.cli.port=<port>`。一次 CLI 调用成功时向标准输出写入 `ok` 和可用的说明，退出码为 `0`。游戏拒绝命令时向标准错误输出错误码和说明，退出码为 `1`。CLI 本地参数校验或连接失败的退出码为 `2`。失败响应返回后，游戏里的监听服务继续等待下一条命令。已接受并排队的命令按原版更新时机结算。
 

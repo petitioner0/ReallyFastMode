@@ -18,10 +18,12 @@ import reallyfastmode.access.ShopAccess;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 /** Commits validated card choices to the active vanilla selection screen. */
 final class CardSelectionAdapter {
@@ -32,19 +34,33 @@ final class CardSelectionAdapter {
         if (requestedCardIds == null) {
             return CombatApiResult.error("invalid_request", "card_ids must be an array.");
         }
+        return selectCards(requestedCardIds.size(), candidates -> resolveCards(candidates, requestedCardIds), false);
+    }
+
+    static CombatApiResult selectCardsByIndex(int[] requestedCardIndices) {
+        if (requestedCardIndices == null) {
+            return CombatApiResult.error("invalid_request", "card_indices must be an array.");
+        }
+        return selectCards(requestedCardIndices.length,
+            candidates -> resolveCardsByIndex(candidates, requestedCardIndices), true);
+    }
+
+    private static CombatApiResult selectCards(
+        int requestedCount, Function<List<AbstractCard>, CardResolution> resolve, boolean indexed
+    ) {
         if (!selectionReady()) {
             return noSelection("No card selection is currently accepting input.");
         }
 
         switch (AbstractDungeon.screen) {
             case HAND_SELECT:
-                return selectFromHand(requestedCardIds);
+                return selectFromHand(resolve, indexed);
             case GRID:
-                return selectFromGrid(requestedCardIds);
+                return selectFromGrid(requestedCount, resolve);
             case CARD_REWARD:
-                return selectFromCardReward(requestedCardIds);
+                return selectFromCardReward(requestedCount, resolve);
             case SHOP:
-                return purchaseShopCard(requestedCardIds);
+                return purchaseShopCard(requestedCount, resolve);
             default:
                 return noSelection("No supported card selection is currently active.");
         }
@@ -99,13 +115,15 @@ final class CardSelectionAdapter {
             && !PeekButton.isPeeking;
     }
 
-    private static CombatApiResult selectFromHand(List<String> requestedCardIds) {
+    private static CombatApiResult selectFromHand(
+        Function<List<AbstractCard>, CardResolution> resolve, boolean indexed
+    ) {
         HandCardSelectScreen screen = AbstractDungeon.handCardSelectScreen;
         if (screen == null || AbstractDungeon.player == null) {
             return CombatApiResult.error("no_card_selection_pending", "Hand selection is unavailable.");
         }
 
-        CardResolution resolution = resolveCards(SelectionAccess.candidates(), requestedCardIds);
+        CardResolution resolution = resolve.apply(SelectionAccess.candidates());
         if (resolution.error != null) {
             return resolution.error;
         }
@@ -118,6 +136,9 @@ final class CardSelectionAdapter {
             return invalidCount(resolution.cards.size(), countRule);
         }
 
+        CombatApiResult result = selectionSuccess(
+            "Selected " + resolution.cards.size() + " card(s) from hand.", resolution.cards
+        );
         // Restore a partially clicked vanilla selection before applying the
         // requested array. Validation above makes this mutation atomic.
         consumeSelectionInput();
@@ -132,7 +153,11 @@ final class CardSelectionAdapter {
             AbstractDungeon.player.hand.removeCard(card);
             card.unhover();
             card.untip();
-            screen.selectedCards.addToBottom(card);
+            if (indexed) {
+                screen.selectedCards.addToTop(card);
+            } else {
+                screen.selectedCards.addToBottom(card);
+            }
         }
         AbstractDungeon.player.hand.refreshHandLayout();
         AbstractDungeon.closeCurrentScreen();
@@ -147,26 +172,31 @@ final class CardSelectionAdapter {
             }
             screen.selectedCards.clear();
         }
-        return CombatApiResult.success("Selected " + resolution.cards.size() + " card(s) from hand.");
+        return result;
     }
 
-    private static CombatApiResult selectFromGrid(List<String> requestedCardIds) {
+    private static CombatApiResult selectFromGrid(
+        int requestedCount, Function<List<AbstractCard>, CardResolution> resolve
+    ) {
         GridCardSelectScreen screen = AbstractDungeon.gridSelectScreen;
         if (screen == null || screen.targetGroup == null) {
             return noSelection("The active grid is not waiting for a card selection.");
         }
         if (screen.isJustForConfirming) {
-            return confirmOfferedCards(screen, requestedCardIds);
+            return confirmOfferedCards(screen, requestedCount);
         }
 
-        if (screen.confirmScreenUp && requestedCardIds.isEmpty()) {
+        List<AbstractCard> candidates = SelectionAccess.candidates();
+        CardResolution resolution;
+        if (screen.confirmScreenUp && requestedCount == 0) {
             AbstractCard previewedCard = PrivateFieldAccess.gridPreviewedCard(screen);
-            if (previewedCard == null) {
+            if (previewedCard == null || !candidates.contains(previewedCard)) {
                 return noSelection("The grid has no card to confirm.");
             }
-            requestedCardIds = Collections.singletonList(CombatIdentifiers.cardId(previewedCard));
+            resolution = CardResolution.success(Collections.singletonList(previewedCard));
+        } else {
+            resolution = resolve.apply(candidates);
         }
-        CardResolution resolution = resolveCards(screen.targetGroup.group, requestedCardIds);
         if (resolution.error != null) {
             return resolution.error;
         }
@@ -192,6 +222,9 @@ final class CardSelectionAdapter {
                 return CombatApiResult.error("insufficient_gold", "Not enough gold to remove a card.");
             }
         }
+        CombatApiResult result = selectionSuccess(
+            "Selected " + resolution.cards.size() + " card(s) from grid.", resolution.cards
+        );
         consumeSelectionInput();
         for (AbstractCard selected : screen.selectedCards) {
             selected.stopGlowing();
@@ -211,27 +244,29 @@ final class CardSelectionAdapter {
         if (shopRemoval && AbstractDungeon.screen == CurrentScreen.SHOP) {
             shop.updatePurge();
         }
-        return CombatApiResult.success("Selected " + resolution.cards.size() + " card(s) from grid.");
+        return result;
     }
 
-    private static CombatApiResult confirmOfferedCards(
-        GridCardSelectScreen screen, List<String> requestedCardIds
-    ) {
-        if (!requestedCardIds.isEmpty()) {
-            return CombatApiResult.error("invalid_selection_count", "Confirm this offer without card IDs.");
+    private static CombatApiResult confirmOfferedCards(GridCardSelectScreen screen, int requestedCount) {
+        if (requestedCount != 0) {
+            return CombatApiResult.error("invalid_selection_count", "Confirm this offer without arguments.");
         }
+        List<AbstractCard> offeredCards = screen.targetGroup.group;
+        CombatApiResult result = selectionSuccess("Confirmed the offered cards.", offeredCards);
         consumeSelectionInput();
         AbstractDungeon.overlayMenu.cancelButton.hide();
         AbstractDungeon.dynamicBanner.hide();
         screen.confirmScreenUp = false;
-        for (AbstractCard card : screen.targetGroup.group) {
+        for (AbstractCard card : offeredCards) {
             AbstractDungeon.topLevelEffects.add(new FastCardObtainEffect(card, card.current_x, card.current_y));
         }
         AbstractDungeon.closeCurrentScreen();
-        return CombatApiResult.success("Confirmed the offered cards.");
+        return result;
     }
 
-    private static CombatApiResult selectFromCardReward(List<String> requestedCardIds) {
+    private static CombatApiResult selectFromCardReward(
+        int requestedCount, Function<List<AbstractCard>, CardResolution> resolve
+    ) {
         CardRewardScreen screen = AbstractDungeon.cardRewardScreen;
         if (screen == null || screen.rewardGroup == null) {
             return noSelection("Card reward choices are unavailable.");
@@ -239,33 +274,36 @@ final class CardSelectionAdapter {
 
         boolean skippable = PrivateFieldAccess.cardRewardSkippable(screen);
         SelectionCountRule countRule = SelectionCountRule.exact(1, false);
-        if (!countRule.allows(requestedCardIds.size())) {
+        if (!countRule.allows(requestedCount)) {
             String suffix = skippable
                 ? " Use skipCardSelection() to skip this choice."
                 : "";
-            return invalidCount(requestedCardIds.size(), countRule, suffix);
+            return invalidCount(requestedCount, countRule, suffix);
         }
 
-        CardResolution resolution = resolveCards(screen.rewardGroup, requestedCardIds);
+        CardResolution resolution = resolve.apply(SelectionAccess.candidates());
         if (resolution.error != null) {
             return resolution.error;
         }
 
+        CombatApiResult result = selectionSuccess("Selected one card reward.", resolution.cards);
         consumeSelectionInput();
         PrivateFieldAccess.chooseCardReward(screen, resolution.cards.get(0));
-        return CombatApiResult.success("Selected one card reward.");
+        return result;
     }
 
-    private static CombatApiResult purchaseShopCard(List<String> requestedCardIds) {
+    private static CombatApiResult purchaseShopCard(
+        int requestedCount, Function<List<AbstractCard>, CardResolution> resolve
+    ) {
         ShopScreen shop = AbstractDungeon.shopScreen;
         if (shop == null || !shop.isActive) {
             return noSelection("The shop is not currently accepting purchases.");
         }
         SelectionCountRule countRule = SelectionCountRule.exact(1, false);
-        if (!countRule.allows(requestedCardIds.size())) {
-            return invalidCount(requestedCardIds.size(), countRule);
+        if (!countRule.allows(requestedCount)) {
+            return invalidCount(requestedCount, countRule);
         }
-        CardResolution resolution = resolveCards(ShopAccess.cards(), requestedCardIds);
+        CardResolution resolution = resolve.apply(ShopAccess.cards());
         if (resolution.error != null) {
             return resolution.error;
         }
@@ -273,9 +311,10 @@ final class CardSelectionAdapter {
         if (AbstractDungeon.player.gold < card.price) {
             return CombatApiResult.error("insufficient_gold", "Not enough gold to purchase this card.");
         }
+        CombatApiResult result = selectionSuccess("Purchased one shop card.", resolution.cards);
         consumeSelectionInput();
         PrivateFieldAccess.purchaseShopCard(shop, card);
-        return CombatApiResult.success("Purchased one shop card.");
+        return result;
     }
 
     private static CombatApiResult cannotSkipHandSelection() {
@@ -306,7 +345,7 @@ final class CardSelectionAdapter {
         if (screen.isJustForConfirming || screen.confirmScreenUp || screen.anyNumber) {
             return CombatApiResult.error(
                 "selection_not_skippable",
-                "Use selectCards() to confirm the active grid without specifying a card ID."
+                "Use selectCards() to confirm the active grid without arguments."
             );
         }
         return CombatApiResult.error(
@@ -322,6 +361,14 @@ final class CardSelectionAdapter {
 
     private static CombatApiResult noSelection(String message) {
         return CombatApiResult.error("no_card_selection_pending", message);
+    }
+
+    private static CombatApiResult selectionSuccess(String message, List<AbstractCard> cards) {
+        List<String> cardNames = new ArrayList<>(cards.size());
+        for (AbstractCard card : cards) {
+            cardNames.add(card.name);
+        }
+        return CombatApiResult.success(message, cardNames);
     }
 
     private static CardResolution resolveCards(
@@ -359,6 +406,30 @@ final class CardSelectionAdapter {
                 ));
             }
             cards.add(match);
+        }
+        return CardResolution.success(cards);
+    }
+
+    private static CardResolution resolveCardsByIndex(List<AbstractCard> candidates, int[] requestedCardIndices) {
+        int[] cardIndices = requestedCardIndices.clone();
+        Arrays.sort(cardIndices);
+        List<AbstractCard> cards = new ArrayList<>(cardIndices.length);
+        int previousIndex = -1;
+        for (int cardIndex : cardIndices) {
+            if (cardIndex < 0 || cardIndex >= candidates.size()) {
+                return CardResolution.error(CombatApiResult.error(
+                    "selection_card_not_found",
+                    "Card index is outside the current selection: " + cardIndex
+                ));
+            }
+            if (cardIndex == previousIndex) {
+                return CardResolution.error(CombatApiResult.error(
+                    "duplicate_card",
+                    "Card index was specified more than once: " + cardIndex
+                ));
+            }
+            cards.add(candidates.get(cardIndex));
+            previousIndex = cardIndex;
         }
         return CardResolution.success(cards);
     }

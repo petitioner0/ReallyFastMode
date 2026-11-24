@@ -12,12 +12,14 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import reallyfastmode.access.CardAccess;
 import reallyfastmode.access.CombatAccess;
 import reallyfastmode.patches.protocol.CombatPacketPatches;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Semantic combat and card selection commands that preserve vanilla resolution.
@@ -37,18 +39,31 @@ public final class CombatApi {
     }
 
     public static CombatApiResult playCard(String cardId, String targetId) {
+        String normalized = cardId == null ? "" : cardId.trim();
+        return playCard(
+            () -> normalized.isEmpty() ? null : findCardInHand(normalized),
+            targetId,
+            normalized.isEmpty() ? "card_id must not be empty." : "Card is not present in the player's hand."
+        );
+    }
+
+    /** Plays the card at the given zero-based position in the current combat hand. */
+    public static CombatApiResult playCardByIndex(int cardIndex, String targetId) {
+        return playCard(() -> {
+            List<AbstractCard> hand = CardAccess.hand();
+            return cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
+        }, targetId, "Card index is outside the player's hand: " + cardIndex);
+    }
+
+    private static CombatApiResult playCard(Supplier<AbstractCard> findCard, String targetId, String missingCardMessage) {
         try {
             CombatApiResult readiness = validatePlayerCommandReady();
             if (readiness != null) {
                 return readiness;
             }
-            if (cardId == null || cardId.trim().isEmpty()) {
-                return CombatApiResult.error("card_not_found", "card_id must not be empty.");
-            }
-
-            AbstractCard card = findCardInHand(cardId.trim());
+            AbstractCard card = findCard.get();
             if (card == null) {
-                return CombatApiResult.error("card_not_found", "Card is not present in the player's hand.");
+                return CombatApiResult.error("card_not_found", missingCardMessage);
             }
             for (CardQueueItem item : AbstractDungeon.actionManager.cardQueue) {
                 if (item != null && item.card == card) {
@@ -170,6 +185,16 @@ public final class CombatApi {
                 ? null
                 : new ArrayList<String>(cardIds);
             return trackCombatSelection(CardSelectionAdapter.selectCards(safeCardIds));
+        } catch (RuntimeException exception) {
+            LOGGER.error("Unable to execute select_cards.", exception);
+            return CombatApiResult.error("internal_error", "select_cards failed unexpectedly.");
+        }
+    }
+
+    /** Selects cards by zero-based positions and submits them in candidate order. */
+    public static CombatApiResult selectCardsByIndex(int... cardIndices) {
+        try {
+            return trackCombatSelection(CardSelectionAdapter.selectCardsByIndex(cardIndices));
         } catch (RuntimeException exception) {
             LOGGER.error("Unable to execute select_cards.", exception);
             return CombatApiResult.error("internal_error", "select_cards failed unexpectedly.");
