@@ -2,7 +2,7 @@
 
 一个用于《杀戮尖塔》（Slay the Spire）的实验性 Mod。开启快速模式后，它会跳过战斗中的大部分纯视觉动画和等待时间，同时尽量保留原版结算流程、回调与游戏状态变化。
 
-项目还提供了一组游戏内 Java API，可以绕过鼠标拖拽和 Hitbox 点击，以语义命令完成出牌、使用药水、选择卡牌和选择休息点操作。
+CLI 和游戏内 Java API 可用于开局、出牌、选牌和推进流程。Mod 通过 UDP 发送游戏状态。
 
 ## 功能
 
@@ -17,354 +17,82 @@
 
 快速模式不会修改游戏的全局 tick，也不会自动跳过 Mod 自定义 Action 或 Effect。卡牌拖拽、目标选择和其他玩家输入流程仍由原版游戏处理。
 
-### 战斗命令 API
+## CLI 与 Java API
 
-当前提供以下游戏内 Java API：
+启动加载了 ReallyFastMode 的游戏后，Windows 下推荐在仓库根目录运行 `rfm.bat`。无参数时检查连接，带参数时运行 CLI。脚本依次查找 `target\ReallyFastMode.jar` 和同目录下的 `ReallyFastMode.jar`。
 
-```java
-CombatApiResult playResult = CombatApi.playCard(cardId, targetId);
-CombatApiResult potionResult = CombatApi.usePotion(potionSlot, targetId);
-CombatApiResult endTurnResult = CombatApi.endTurn();
-CombatApiResult selectionResult = CombatApi.selectCards(cardIds);
-CombatApiResult skipResult = CombatApi.skipCardSelection();
+```bat
+.\rfm.bat
+.\rfm.bat --help
+.\rfm.bat selectCards 0 2
 ```
 
-- `playCard`：从当前手牌中定位卡牌并加入原版出牌队列。
-- `usePotion`：使用指定药水槽中的药水，并执行原版遗物回调和药水移除流程。
-- `endTurn`：触发原版结束回合按钮流程，排队执行玩家回合收尾和敌方回合。
-- `selectCards`：按当前界面选择手牌、网格卡牌、卡牌奖励或商店卡牌，战斗外也可调用。
-- `skipCardSelection`：在原版允许跳过当前卡牌奖励时返回上一界面。
-- 所有战斗命令都返回 `CombatApiResult`，其中包含成功状态、错误码和说明消息。
-
-标识规则：
-
-- 卡牌使用当前实例的 `AbstractCard.uuid` 字符串。
-- 敌人优先使用 `monster:<index>`；当原始怪物 ID 唯一时，也可以使用原始 ID。
-- 药水使用玩家药水栏的零基槽位。
-
-可以通过 `CombatIdentifiers.cardId(card)` 和 `CombatIdentifiers.targetId(monster)` 生成对应标识。
-
-> 游戏内 Java API 必须在渲染线程调用。通过 CLI 调用时，Mod 会将命令交给渲染线程执行。
-
-事件、地图、营火、奖励、继续和商店删牌命令返回 `GameCommandResult`。调用方可用 `isSuccess()` 判断命令是否接受，用 `getCode()` 和 `getMessage()` 读取失败原因。参数无效返回 `invalid_argument`，当前状态不接受操作返回 `invalid_state`。
-
-### CLI
-
-启动加载了 ReallyFastMode 的游戏后，在终端用同一份 Mod JAR 运行 CLI。
+也可直接用同一份 Mod JAR 运行 CLI。
 
 ```sh
 java -jar ReallyFastMode.jar --help
-java -jar ReallyFastMode.jar startRun 18ISL35FYK4 1 0 2
-java -jar ReallyFastMode.jar selectNode -1 15
 java -jar ReallyFastMode.jar playCard 0 monster:0
-java -jar ReallyFastMode.jar selectCards 0 2
-java -jar ReallyFastMode.jar proceed
 ```
 
-| 命令 | 位置参数 |
-|---|---|
-| `startRun` | `seed runId [ascensionLevel [characterId]]` |
-| `playCard` | `cardIndex [targetId]`，对应战斗状态包 `HAND_CARD` 的零基序号 |
-| `usePotion` | `potionSlot [targetId]` |
-| `endTurn` | 无 |
-| `selectCards` | `[cardIndex ...]`，对应 `SELECTION` 候选的零基序号，商店买牌使用 `SHOP` 的卡牌列表 |
-| `skipCardSelection` | 无 |
-| `selectOption` | 事件的整数序号，或 `REST`、`SMITH`、`DIG`、`LIFT`、`TOKE`、`RECALL` |
-| `selectNode` | `x y` |
-| `claimReward` | `rewardIndex` |
-| `openChest` | 无 |
-| `claimBossRelic` | `relicIndex` |
-| `proceed` | 无 |
-| `openCardRemoval` | 无 |
-
-`selectCards` 按候选顺序提交并在成功回执中显示牌名。例如 `selectCards 2 0` 会先选第 1 张，再选第 3 张。允许零张选择、确认预览或确认整组卡牌时，可省略序号。
-
-CLI 默认连接本机 `127.0.0.1:18775`。需要更换端口时，给游戏 JVM 和 CLI JVM 设置相同的 `-Dreallyfastmode.cli.port=<port>`。一次 CLI 调用成功时向标准输出写入 `ok` 和可用的说明，退出码为 `0`。游戏拒绝命令时向标准错误输出错误码和说明，退出码为 `1`。CLI 本地参数校验或连接失败的退出码为 `2`。失败响应返回后，游戏里的监听服务继续等待下一条命令。已接受并排队的命令按原版更新时机结算。
-
-### 战斗内外选牌 API
-
-```java
-CombatApi.selectCards(firstCardUuid, secondCardUuid); // 当前网格允许选两张时
-CombatApi.selectCards(rewardCardUuid); // 领取当前卡牌奖励
-CombatApi.selectCards(shopCardUuid); // 在商店购买一张卡牌
-ShopApi.openCardRemoval(); // 打开商店删牌网格
-CombatApi.selectCards(deckCardUuid); // 选择删牌并由商店扣费
-```
-
-- 营火、事件和遗物打开的网格沿用原版候选和数量规则。选择提交后，由原版升级、变化、删牌或遗物流程读取结果。
-- 无参数的 `selectCards()` 可确认原版允许的零张选择、单张卡牌预览或直接发放整组卡牌的界面。跳过卡牌奖励使用 `skipCardSelection()`。
-- 进入商店房后，原版初始化商品，Mod 随即打开商人界面。可以照常关闭界面并离开房间。
-- 购买时从 `ShopAccess.cards()` 获取当前商品的卡牌 UUID。每次购买一张，金币不足时返回 `insufficient_gold`，结算和补货走原版商店逻辑。
-
-### 整局命令 API
-
-`RunApi` 独立于 `CombatApi`，负责整局生命周期命令。可在主菜单指定种子、`RunID`、进阶等级和角色。
-
-```java
-RunApiResult result = RunApi.startRun(seed, runId);
-RunApiResult ascensionResult = RunApi.startRun(seed, runId, ascensionLevel);
-RunApiResult characterResult = RunApi.startRun(seed, runId, ascensionLevel, characterId);
-```
-
-- 仅当没有正在运行或正在启动的 Run 时接受命令；否则返回 `run_already_active`。
-- 游戏尚未进入可用主菜单状态时返回 `game_not_ready`。
-- `characterId` 的 `0`、`1`、`2`、`3` 分别对应铁甲战士、静默猎手、故障机器人和观者。其他值返回 `invalid_character_id`。
-- 四参数版本接受 `0`–`20` 级进阶，`0` 表示普通难度。两参数和三参数版本默认使用铁甲战士，分别支持普通难度和 `1`–`20` 级进阶。进阶越界返回 `invalid_ascension_level`。
-- 每日挑战、自定义挑战和无尽模式始终关闭。
-- 跳过主菜单淡出、第一幕标题转场和开局淡入；不会跳过涅奥奖励等会改变玩法结果的交互。
-- 原版 `AbstractDungeon` 会被注入公开的 `int RunID` 字段及 `getRunID()`；同一局跨幕创建的新 dungeon 实例保持相同 `RunID`。
-- `runId` 由调用方分配，范围为 `0–65535`。越界返回 `invalid_run_id`。可通过 `GameAccess.runId()` 读取当前局标识。
-- `RunID` 写入当前对局存档并在读档时恢复。手动新局和缺少该字段的旧存档使用默认值 `0`。
-- 与战斗 API 相同，必须在游戏渲染线程调用；命令返回成功表示开局已排入原版下一次游戏更新。
-
-### 休息点选择 API
-
-```java
-RestApi.selectOption(VanillaRestOptionCatalog.REST);
-```
-
-- 入口为 `reallyfastmode.api.RestApi.RestApi.selectOption`，只接收一个 `VanillaRestOptionCatalog` 枚举参数。
-- 支持 `REST`（休息）、`SMITH`（升级）、`DIG`（挖掘）、`LIFT`（举重）、`TOKE`（删牌）、`RECALL`（回忆）。
-- 从当前营火的真实选项列表中精确匹配类型，直接调用原版 `useOption()`，然后设置 `somethingSelected = true`。
-- `null`、`UNKNOWN`、当前不存在或 `usable == false` 的选项返回 `invalid_argument`。当前没有可操作的营火时返回 `invalid_state`。
-- 必须在游戏渲染线程调用。成功结果表示已触发选项。治疗、奖励、升级或删牌选择等后续流程由原版处理。
-
-### 地图节点选择 API
-
-```java
-MapApi.selectNode(x, y);
-```
-
-- 入口为 `reallyfastmode.api.MapApi.MapApi.selectNode(int x, int y)`。普通节点使用零基坐标，先列 `x`、后行 `y`；唯一允许的负坐标是 Boss 节点 `(-1, 15)`。
-- 必须在游戏渲染线程、地图选择界面且当前房间已完成时调用。目标必须属于 `MapAccess.availableMapNodes()`。普通节点按首层、地图连线或飞靴 / Flight 判定可达性。
-- 坐标无效、节点不存在或不可达时返回 `invalid_argument`。当前不可选或已有节点等待进入时返回 `invalid_state`。
-- 普通节点保留首次选房标记、飞靴消耗和问号房计数。API 将 `animWaitTimer` 设为负值，由原版 `MapRoomNode.update` 记录路径并启动切房。
-- 完成前三幕各自的地图末排房间，或完成第四幕精英房后，可以用 `selectNode(-1, 15)` 进入 Boss 房。该分支按原版 Boss 图标的规则记录路径并启动转场。
-
-### 事件选项 API
-
-```java
-EventApi.selectOption(0); // 选择最下面的选项
-```
-
-- 入口为 `reallyfastmode.api.EventApi.EventApi.selectOption(int optionIndex)`，从下往上按 `0, 1, 2, ...` 编号，禁用项同样占用编号。
-- 例如从上到下为「选项 A、禁用项、选项 B」，则传 `0` 选择 B、传 `1` 返回 `invalid_argument`、传 `2` 选择 A。
-- 负数、越界或禁用项返回 `invalid_argument`。没有可操作事件对话框、存在覆盖界面或已有选择等待处理时返回 `invalid_state`。
-- 支持 `GenericEventDialog` 和 `RoomEventDialog`，按 `总数 - 1 - optionIndex` 转换到原版列表下标，提交 `selectedOption` / `waitForInput`，由当前事件后续更新处理效果。
-- 必须在游戏渲染线程调用；`EventAccess.options()` 和事件协议仍保持原版从上到下的顺序，调用 API 时需转换编号。
-
-### 开箱与奖励 API
-
-```java
-RewardApi.openChest();
-RewardApi.claimReward(0); // 尝试领取通用奖励页最上面的一项
-RewardApi.claimBossRelic(0); // 选择 Boss 遗物列表中的第一件
-```
-
-- `openChest()` 在没有覆盖界面时打开当前房间的普通宝箱或 Boss 宝箱。原版开箱逻辑生成奖励并显示对应界面，领取由后续命令提交。
-- `claimBossRelic(int relicIndex)` 按 `RewardAccess.bossRelicChoices()` 的零基序号提交 Boss 遗物选择。原版处理初始遗物替换、选择记录和界面关闭。索引无效时返回 `invalid_argument`，当前无法选择或已有选择待处理时返回 `invalid_state`。
-- 入口为 `reallyfastmode.api.RewardApi.RewardApi.claimReward(int rewardIndex)`，按当前奖励界面从上到下以 `0, 1, 2, ...` 编号。
-- 负数或越界返回 `invalid_argument`。奖励界面不可操作、已有一次领取等待处理，或领取药水需要空槽但药水栏已满时返回 `invalid_state`。
-- API 只把对应 `RewardItem.isDone` 设置为 `true`，等同于原版 `RewardItem.update()` 对一次点击的提交结果。下一次 `CombatRewardScreen.update()` 会调用原版 `claimReward()`。
-- 原版更新决定奖励是否移除或打开选牌界面。已接受的领取由下一次游戏更新结算。
-- 这些入口必须在游戏渲染线程调用。`claimReward()` 返回成功表示领取已排队。
-
-### 继续操作 API
-
-```java
-ProceedApi.proceed();
-```
-
-- 入口为 `reallyfastmode.api.ProceedApi.ProceedApi.proceed()`，必须在游戏渲染线程调用。当前处于奖励页或已完成的房间，且原版「继续」按钮可操作时接受命令。
-- 返回成功表示操作已排队。下一次按钮更新会执行原版流程，包括打开地图、推进 Boss 宝箱、跨幕或进入胜利房。若房间或界面已切换，本次操作失效。
-- 当前不可继续或已有操作待处理时返回 `invalid_state`。
-
-### 原子状态读取 API
-
-`reallyfastmode.access` 提供只读的游戏状态入口：
-
-```java
-int hp = PlayerAccess.hp();
-int energy = PlayerAccess.energy();
-int runId = GameAccess.runId();
-List<AbstractCard> hand = CardAccess.hand();
-List<AbstractMonster> monsters = MonsterAccess.monsters();
-int monsterInstanceId = MonsterAccess.instanceId(monsters.get(0));
-byte monsterInstanceId4Bit = MonsterAccess.instanceId4Bit(monsters.get(0));
-List<AbstractCard> candidates = SelectionAccess.candidates();
-List<MapRoomNode> nodes = MapAccess.availableMapNodes();
-```
-
-读取层按领域分为 `GameAccess`、`PlayerAccess`、`CombatAccess`、`CardAccess`、`MonsterAccess`、`PotionAccess`、`SelectionAccess`、`MapAccess`、`RewardAccess`、`EventAccess`、`ShopAccess` 和 `RestAccess`。
-
-- 数据始终来自当前 `AbstractDungeon`、Player、Room、Screen 或 Action，不缓存完整状态，也不提供历史记录。
-- 集合是不可修改的浅拷贝，其中的卡牌、怪物等奖励对象仍是当前真实 STS 对象。
-- 每个已初始化怪物拥有房间内实例 ID；`MonsterAccess.instanceId4Bit(monster)` 使用高四位恒为零的 `byte` 容器返回 `0`–`15`，第 17 个怪物初始化时直接报错。
-- 读取层不生成 JSON 或 packet，不处理 transport，也不决定下一步行动。
-- 所有读取都必须在游戏渲染线程调用；返回的原版对象应当视为只读。
-
-### Game 协议
-
-`GameSnapshotBuilder` 捕获一份当前 Game 标量快照，`GameBlockWriter` 按固定顺序将它直接写入 MSB-first、big-endian bit stream：
-
-```java
-GameSnapshot game = GameSnapshotBuilder.build();
-BitWriter out = new BitWriter(16);
-GameBlockWriter.write(out, game);
-byte[] block = out.toByteArray();
-```
-
-Game block 依次编码 act、floor、进阶等级和三把钥匙，共 17 bit。act 直接读取 `AbstractDungeon.actNum`：原版 `1`–`4` 显式映射为 wire ID `0`–`3`，其他值映射为 UNKNOWN `4`。
-
-### Player 协议
-
-`PlayerSnapshotBuilder` 捕获玩家标量状态以及 Orb、Power、Relic 变长列，`PlayerBlockWriter` 按 `ProtocolSlots.Player` 的顺序编码：
-
-```java
-PlayerSnapshot player = PlayerSnapshotBuilder.build();
-BitWriter out = new BitWriter(64);
-PlayerBlockWriter.write(out, player);
-byte[] block = out.toByteArray();
-```
-
-`maxOrbs` 直接指定 Orb wire ID 列长度；Power 和 Relic 分别先写入 5-bit 和 8-bit entry count，对应 count 列与其 ID 列等长。Relic count 使用 8-bit unsigned，原版负数哨兵统一编码为 0。未知或 Mod Orb、Power、Relic 使用各自原版目录的尾值。
-
-### Combat 协议
-
-`CombatSnapshotBuilder` 捕获当前 `GameActionManager.turn`，`CombatBlockWriter` 将其编码为一个 8-bit unsigned 值：
-
-```java
-CombatSnapshot combat = CombatSnapshotBuilder.build();
-BitWriter out = new BitWriter(1);
-CombatBlockWriter.write(out, combat);
-byte[] block = out.toByteArray();
-```
-
-Combat block 固定为 8 bit，允许回合数 `0–255`。
-
-### Potion 协议
-
-`PotionSnapshotBuilder` 从 `PlayerAccess.potionSlots()` 获取玩家当前药水槽位总数，并捕获每个槽位的 Potion wire ID：
-
-```java
-PotionSnapshot potions = PotionSnapshotBuilder.build();
-BitWriter out = new BitWriter(8);
-PotionBlockWriter.write(out, potions);
-byte[] block = out.toByteArray();
-```
-
-槽位数使用 3-bit，每个 Potion wire ID 使用 6-bit。原版目录为 `0–42`，空槽固定为 `43`，未知或 Mod Potion 固定为 `44`。
-
-### Card SoA 协议
-
-`CardColumnsBuilder` 使用同一实现捕获 deck 或战斗牌堆，`CardBlockWriter` 根据快照的 layout 写出对应列：
-
-```java
-CardColumns deck = CardColumnsBuilder.buildDeck(CardAccess.masterDeck());
-CardColumns hand = CardColumnsBuilder.buildCombat(CardAccess.hand());
-BitWriter out = new BitWriter(128);
-CardBlockWriter.write(out, deck);
-CardBlockWriter.write(out, hand);
-byte[] blocks = out.toByteArray();
-```
-
-Deck 编码基础 `cost`、升级状态和三个瓶装标志；hand、draw pile、discard pile、exhaust pile 编码 `costForTurn` 和升级状态。空牌堆编码为零数量 block，X 费保持 `-1`，未知卡牌使用 wire ID `432`。
-
-### Monster SoA 协议
-
-`MonsterColumnsBuilder` 将调用方给出的怪物列表捕获为 SoA，`MonsterBlockWriter` 再按固定列顺序写入 MSB-first、big-endian bit stream：
-
-```java
-MonsterColumns monsters = MonsterColumnsBuilder.build(MonsterAccess.monsters());
-BitWriter out = new BitWriter(128);
-MonsterBlockWriter.write(out, monsters);
-byte[] block = out.toByteArray();
-```
-
-捕获层要求输入列表非空并保持其顺序，不决定环境、存活状态或目标可用性；没有怪物时应由上层省略 Monster block，而不是调用 Builder。当前布局最多编码 16 个怪物。`ProtocolSlots` 只作为具体 SoA 类型的字段顺序参考，不使用 `Object[]` 承载协议数据。
-
-### 状态包头
-
-状态包使用 4 字节包头。前 2 字节是无符号 `run_id`，后 2 字节是块存在掩码，两个字段都用大端序。掩码的第 `n` 位对应 `ProtocolSlots` 中编号为 `n` 的槽位，`0` 表示缺席，`1` 表示存在。正文按槽位编号递增写入存在的块。
-
-全量地图与当前地图节点共用第 11 位。该槽位正文的首位是类型标识。`0` 表示全量地图，紧接 `isAct4`，前三幕共 745 位，第四幕共 2 位。`1` 表示当前节点，紧接 4 位 X 和 4 位 Y，共 9 位。各块按位连续写入。
-
-```java
-int mask = PacketHeaderProtocol.blockBit(ProtocolSlots.GAME)
-    | PacketHeaderProtocol.blockBit(ProtocolSlots.PLAYER);
-PacketHeaderWriter.write(out, GameAccess.runId(), mask);
-```
-
-### Java 解码参考实现
-
-接收端可以用任意语言，按二进制协议定义的包头、槽位顺序、各块位布局和 ID 映射自行解码，并选择自己的数据结构、记录生命周期和错误处理方式。本仓库的 [`PacketDecoder`](src/main/java/reallyfastmode/protocol/read/PacketDecoder.java) 和 [`PacketRecord`](src/main/java/reallyfastmode/protocol/read/PacketRecord.java) 是 Java 环境下的参考实现。以下 API 说明适用于这份实现。
-
-`PacketDecoder.tryReadHeader(packet, expectedRunId)` 只检查 4 字节包头。包头缺失、不足 4 字节或 `run_id` 与预期不一致时返回 `null`。通过时返回 `Header`，可用 `hasBlock(slot)` 查询块是否存在，并从原数组的 `bodyOffsetBytes()` 位置继续读正文。
-
-`PacketDecoder.decode(packet, expectedRunId)` 支持全部 16 个槽位。它从 bit 偏移 `32` 开始，按槽位顺序读取掩码中置位的块，全部解码成功后返回末尾 bit 偏移。包头校验失败或字段值无效时抛出 `IllegalArgumentException`，块数据截断抛出 `BufferUnderflowException`。
-
-每个成功解码的包都有独立的 `PacketRecord`，`runId` 来自包头。通过 `game()`、`player()`、`combat()`、`deck()`、`hand()`、`drawPile()`、`discardPile()` 和 `exhaustPile()` 读取对应快照。这些块缺席时返回 `null`，存在但为空的牌堆返回 `size` 为 `0` 的快照。`PacketDecoder.latestRecord()` 返回最近一次完整解码的记录，首次成功前返回 `null`。解码抛出异常时保留上一份记录。
-
-解码记录将游戏 ID 还原为字符串（如 `Exordium`、`Lightning`）。未知或未收录的 ID 返回 `Unknown`。数值展开为 Java `int` 或 `int[]`，单比特标记读作 `0` 或 `1`，Power 层数和卡牌费用保留符号。
-
-四种战斗牌堆使用同一布局，依次读取数量、卡牌 ID 列、`costForTurn` 列和升级标记列。瓶装标记只在 `deck()` 中读取。
-
-通过 `monsters()`、`potions()` 和 `selection()` 读取怪物、药水和选牌快照。怪物的 Power 列按怪物顺序拼接，每只怪物的条目数见 `powerEntryCount[]`。药水空槽读取为 `Empty`。
-
-`map()` 返回同一 `runId` 最近一次成功解码的全量地图。当前节点包和缺少 `MAP` 槽位的包会沿用该地图，直到下一份全量地图成功解码。首次收到该对局的全量地图前，`map()` 返回 `null`。`currentMapSelection()` 只返回本包携带的当前坐标，缺席时返回 `null`。
-
-完整地图的节点按 `y * 7 + x` 排列，连接展开为左、中、右三个 `0` / `1` 列。无翡翠钥匙时坐标为 `(-1, -1)`。Act 4 标记的 `isAct4` 为 `1`，节点和连接列为空。当前坐标的 `(0, -1)` 表示尚未选房间，`(-1, 15)` 表示 Boss 房。
-
-`map().graph()` 返回地图的静态有向图。用 `entryNodes()` 获取入口，`nodeAt(x, y)` 查找房间，`successors()` 读取某个房间的出边。节点携带坐标、房间类型和 `hasEmeraldKey`。前三幕按包内连线建图，并将有效末排节点接到 `(-1, 15)` 的 Boss。Act 4 按原版固定布局建图，休息点、商店、精英和 Boss 依次相连，胜利房间位于 `(3, 4)`。
-
-通过 `rewards()`、`event()`、`shop()` 和 `rest()` 读取奖励、事件、商店和休息点。奖励的遗物、药水和金额列各自按对应奖励的出现顺序排列，`GOLD` 和 `STOLEN_GOLD` 共用金额列。事件选项用 `0` / `1` 标记可用性。商店的 `purgeCost` 是把编码值按每单位 25 金币换算后的金额，精度为 25 金币。休息点的 `availableOptions` 按掩码位从低到高列出可用选项。
-
-### 零拷贝 packet 输出
-
-packet 层能够预先计算最终字节数时，应当先分配最终数组，再让 `BitWriter` 直接写入该数组：
-
-```java
-byte[] packet = new byte[packetByteSize];
-BitWriter out = BitWriter.wrap(packet);
-// 依次写入 header 和 blocks
-// 写完后直接发送 packet，不调用 toByteArray()
-```
-
-`wrap` 使用固定容量且不会替换底层数组；写出容量会在该次写入修改数组前抛出异常。目标数组必须是新建或已清零的数组。只有最终长度未知的场景才使用 growable constructor 和 `toByteArray()`。
-
-### 战斗状态包
-
-每个玩家回合在起手抽牌和回合开始效果结算、恢复操作后发送一份战斗包，包括进入战斗后的首回合。开局或换回合时需要先选牌的，候选出现后先发带 `SELECTION` 的战斗包，选完并结算后再发普通战斗包。
-
-出牌、喝药或提交战斗选牌后，Mod 在 `AbstractDungeon.update()` 结束时检查战斗是否已结束、是否在等待选牌，或是否回到玩家可操作的闲时。普通包包含 `GAME`、`PLAYER`、`COMBAT`、`DECK_CARD`、四个战斗牌堆、`MONSTER`、`POTION` 和当前节点 `MAP`。等待选牌时附加 `SELECTION`，选择后继续等待后续效果结算。清场时退出战斗组包流程。
-
-状态包组好后立即通过 UDP 发往 `127.0.0.1:18776`。接收端监听该地址和端口，每条数据报的载荷就是一个完整的二进制状态包。可通过游戏 JVM 参数 `-Dreallyfastmode.state.port=<port>` 更换目的端口。
-
-### 奖励包
-
-奖励页打开时和处理一次领取后，Mod 发送当前奖励列表。战后奖励和普通宝箱共用此流程。Boss 宝箱打开时，`REWARD` 按 `claimBossRelic(relicIndex)` 的顺序列出候选遗物。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `REWARD`。
-
-进入卡牌奖励或遗物触发的选牌界面时，会追加一份带 `SELECTION` 的奖励包。Boss 遗物已选定时，该包的 `REWARD` 为空。选牌完成并结算后，发送更新后的玩家状态和当前奖励列表。奖励领完或 Boss 遗物候选页被关闭时，`REWARD` 为空。遗物开启新的奖励列表时，按新列表发包。
-
-### 全量地图包
-
-每次进入新楼层时发一个全量地图包。新开局、读档和进入新一幕时，在地图可用的第一帧也发当前楼层。包包含 `GAME` 和全量 `MAP`，用 `GAME` 中的幕和楼层识别所属位置。第四幕沿用协议的固定地图标记，由解码器还原地图。
-
-### 事件包
-
-每当事件的下一组选项可用时，Mod 发送事件包。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `EVENT`。选项打开选牌界面时，在候选就绪后发带 `SELECTION` 的包。等待效果结算或事件结束时，只有出现新的可操作选项才会继续发事件包。
-
-### 火堆包
-
-进入火堆后，Mod 在营火菜单就绪时发送包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `REST` 的包。锻造、`TOKE` 删牌或捕梦网的选牌候选就绪时，发送附带 `SELECTION` 的包，此时 `REST` 的可用操作掩码为 `0`。取消选牌并回到营火菜单时，重新发送可用选项。
-
-每种营火操作结算后都发送一份更新后的玩家状态包，`REST` 的可用操作掩码为 `0`。挖掘等操作打开额外奖励时，奖励页走奖励包流程，关闭后再发送营火结算包。
-
-### 商店包
-
-商店界面每次打开后，在第一次仍处于 `SHOP` 的界面更新结束时发送一份商店包。进房自动开店和之后重新打开都走这个时点。包包含 `GAME`、`PLAYER`、`DECK_CARD`、`POTION`、当前节点 `MAP` 和 `SHOP`，其中 `SHOP` 列出当前商品、价格和删牌服务状态。
-
-通过 `openCardRemoval` 或原版商店界面打开删牌网格后，候选就绪时发送一份附带 `SELECTION` 的商店包。确认删牌并返回 `SHOP` 后，发送更新后的牌组、金币和商店状态。购买卡牌、遗物或药水也在相关效果结算且 `SHOP` 界面可用时发包。操作结算与重新打开商店发生在同一次更新时，共用一包。
+CLI 默认连接本机 TCP `127.0.0.1:18775`。自定义端口时，在游戏 JVM 上设置 `-Dreallyfastmode.cli.port=<port>`，并将 `REALLYFASTMODE_CLI_PORT` 设为同一端口供 `rfm.bat` 使用。直接运行 JAR 时，CLI JVM 也使用该 JVM 参数。退出码 `0` 表示命令已接受，`1` 表示游戏拒绝，`2` 表示参数或连接错误。
+
+游戏内 Mod 可在渲染线程直接调用 [Java API](src/main/java/reallyfastmode/api)。CLI 也在渲染线程执行相应命令。
+
+| 命令 | 位置参数与用途 |
+| --- | --- |
+| `startRun` | `seed runId [ascensionLevel [characterId]]`，从主菜单开局。对局 ID 范围为 0–65535，角色 ID 0–3 依次为铁甲战士、静默猎手、故障机器人、观者。 |
+| `playCard` | `cardIndex [targetId]`，按 `HAND_CARD` 中的零基序号出牌。 |
+| `usePotion` | `potionSlot [targetId]`，使用指定零基槽位的药水。 |
+| `endTurn` | 结束回合。 |
+| `selectCards` | `[cardIndex ...]`，按 `SELECTION` 候选或 `SHOP` 卡牌列表的零基序号选牌。界面允许直接确认时可省略序号。 |
+| `skipCardSelection` | 跳过卡牌奖励。 |
+| `selectOption` | 事件选项从下往上从 0 编号，禁用项也占编号。营火使用 `REST`、`SMITH`、`DIG`、`LIFT`、`TOKE` 或 `RECALL`。 |
+| `selectNode` | `x y`，选择地图节点，Boss 节点为 `-1 15`。 |
+| `claimReward` | `rewardIndex`，领取从上往下按零基编号的奖励。 |
+| `openChest` | 打开当前宝箱。 |
+| `claimBossRelic` | `relicIndex`，按零基序号选择 Boss 遗物。 |
+| `proceed` | 执行当前界面的「继续」操作。 |
+| `openCardRemoval` | 打开商店删牌界面。 |
+
+`targetId` 可用 `monster:<index>` 指定当前房间怪物列表的零基序号，也可用在列表中唯一的原版怪物 ID。
+
+## 状态包协议
+
+状态包通过 UDP 发往 `127.0.0.1:18776`，每个数据报携带一个完整状态包。游戏 JVM 参数 `-Dreallyfastmode.state.port=<port>` 可更改目的端口。
+
+### 包头
+
+从包起点依次读取 **对局 ID `run_id`（16 位）→ 块存在掩码（16 位）**。掩码最低位编号为 0，置 1 的块按槽位编号从小到大排列，正文从位偏移 32 开始。各字段高位先传，多字节字段为大端序。字段和块连续拼接，最后一个字节剩余的低位补 0。
+
+### 正文
+
+表内从左到右为传输顺序，括号内为位宽。「列」表示先读完该字段的全部元素，再读下一列，位宽按每个元素计算。标注为有符号的字段使用二进制补码，其余数值为无符号。
+
+| 掩码位 | 块 | 字段顺序与位宽 |
+| --- | --- | --- |
+| 0 | `GAME` | 幕 ID（3）→ 楼层（6）→ 进阶等级（5）→ 红宝石、翡翠、蓝宝石钥匙标志（各 1），共 17 位。幕 1–4 对应 ID 0–3，未知幕为 4。 |
+| 1 | `PLAYER` | 生命（10）→ 最大生命（10）→ 格挡（10）→ 能量（8）→ 金币（12）→ 充能球槽数（4）→ 充能球 ID 列（3）→ 能力条目数（5）→ 能力 ID 列（8）→ 能力层数列（12，有符号）→ 遗物条目数（8）→ 遗物 ID 列（8）→ 遗物计数列（8）。各列长度取对应的槽数或条目数。 |
+| 2 | `COMBAT` | 回合数（8）。 |
+| 3 | `DECK_CARD` | 卡牌数（8）→ 卡牌 ID 列（9）→ 基础费用列（4，有符号）→ 升级标志列（1）→ 瓶装火焰标志列（1）→ 瓶装闪电标志列（1）→ 瓶装旋风标志列（1）。各列长度等于卡牌数。 |
+| 4 | `HAND_CARD` | 卡牌数（8）→ 卡牌 ID 列（9）→ 本回合费用列（4，有符号）→ 升级标志列（1）。各列长度等于卡牌数。 |
+| 5 | `DRAW_PILE_CARD` | 同 `HAND_CARD`。 |
+| 6 | `DISCARD_PILE_CARD` | 同 `HAND_CARD`。 |
+| 7 | `EXHAUST_PILE_CARD` | 同 `HAND_CARD`。 |
+| 8 | `MONSTER` | 怪物数（5）→ 实例 ID 列（4）→ 怪物类型 ID 列（8）→ 生命列（12）→ 最大生命列（12）→ 格挡列（16）→ 每只怪物的能力条目数列（5）→ 能力 ID 列（8）→ 能力层数列（12，有符号）→ 意图 ID 列（4）→ 意图单次伤害列（8）→ 意图攻击次数列（8）。能力 ID 和层数各按怪物顺序拼接，列长为各怪物的能力条目数之和。其余列长度等于怪物数。 |
+| 9 | `POTION` | 药水槽数（3）→ 每槽药水 ID 列（6）。空槽为 43，未知药水为 44。 |
+| 10 | `SELECTION` | 候选数（8）→ 最多可选张数（8）→ 候选卡牌 ID 列（9）→ 候选升级标志列（1）。两列长度等于候选数。 |
+| 11 | `MAP` | 地图类型（1）→ 全量地图或当前节点，见下方。 |
+| 12 | `REWARD` | 奖励数（3）→ 奖励类型 ID 列（3）→ 遗物 ID 列（8）→ 药水 ID 列（6）→ 金币金额列（8）。后三列各按奖励类型列中的出现顺序取值，`GOLD` 和 `STOLEN_GOLD` 共用金额列。 |
+| 13 | `EVENT` | 事件 ID（6）→ 选项数（3）→ 从上往下每个选项的可用标志（各 1）。 |
+| 14 | `SHOP` | 卡牌数（3）→ 卡牌 ID 列（9）→ 卡牌价格列（9）→ 删牌可用标志（1）→ 删牌价格（4，以 25 金币为单位）→ 遗物数（2）→ 遗物 ID 列（8）→ 遗物价格列（9）→ 药水数（2）→ 药水 ID 列（6）→ 药水价格列（9）。商品列长度等于对应商品数。 |
+| 15 | `REST` | 可用营火选项掩码（8）。从最低位起，位 0–5 依次为 `REST`、`SMITH`、`DIG`、`LIFT`、`TOKE`、`RECALL`，位 6 未分配，位 7 表示未知选项。 |
+
+`MAP` 的两种布局如下。
+
+- **类型 0，全量地图。** 接着读取第四幕标志（1）。第四幕到此结束，共 2 位。前三幕继续读取 105 个节点类型 ID（各 4）→ 翡翠钥匙坐标 X、Y（各 4）→ 105 个节点的连线掩码（各 3），共 745 位。两列均按 `y × 7 + x` 排列，连线掩码的位 0、1、2 依次表示向左、中、右连线。钥匙坐标编码为 `(15, 15)` 时表示无钥匙。
+- **类型 1，当前节点。** 接着读取 X、Y（各 4），共 9 位。编码 `(0, 15)` 表示尚未选房间，`(15, 15)` 表示 Boss 节点 `(-1, 15)`。
+
+`REWARD` 的类型 ID 0–7 依次为 `CARD`、`GOLD`、`RELIC`、`POTION`、`STOLEN_GOLD`、`EMERALD_KEY`、`SAPPHIRE_KEY`、`UNKNOWN`。其他 ID 映射见[原版目录](src/main/java/reallyfastmode/protocol/VanillaCatalog)和[怪物意图目录](src/main/java/reallyfastmode/protocol/MonsterIntentCatalog.java)。
 
 ## 运行环境
 
