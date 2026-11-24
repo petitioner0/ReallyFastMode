@@ -3,6 +3,7 @@ package reallyfastmode.cli;
 import reallyfastmode.api.CombatApi.CombatApi;
 import reallyfastmode.api.CombatApi.CombatApiResult;
 import reallyfastmode.api.EventApi.EventApi;
+import reallyfastmode.api.GameCommandResult;
 import reallyfastmode.api.MapApi.MapApi;
 import reallyfastmode.api.ProceedApi.ProceedApi;
 import reallyfastmode.api.RestApi.RestApi;
@@ -38,34 +39,24 @@ final class GameCommandDispatcher {
                 case SKIP_CARD_SELECTION:
                     return reply(CombatApi.skipCardSelection());
                 case SELECT_OPTION:
-                    selectOption(args[1]);
-                    break;
+                    return reply(selectOption(args[1]));
                 case SELECT_NODE:
-                    MapApi.selectNode(integer(args[1], "x"), integer(args[2], "y"));
-                    break;
+                    return reply(MapApi.selectNode(integer(args[1], "x"), integer(args[2], "y")));
                 case CLAIM_REWARD:
-                    RewardApi.claimReward(integer(args[1], "rewardIndex"));
-                    break;
+                    return reply(RewardApi.claimReward(integer(args[1], "rewardIndex")));
                 case OPEN_CHEST:
-                    RewardApi.openChest();
-                    break;
+                    return reply(RewardApi.openChest());
                 case CLAIM_BOSS_RELIC:
-                    RewardApi.claimBossRelic(integer(args[1], "relicIndex"));
-                    break;
+                    return reply(RewardApi.claimBossRelic(integer(args[1], "relicIndex")));
                 case PROCEED:
-                    ProceedApi.proceed();
-                    break;
+                    return reply(ProceedApi.proceed());
                 case OPEN_CARD_REMOVAL:
-                    ShopApi.openCardRemoval();
-                    break;
+                    return reply(ShopApi.openCardRemoval());
                 default:
                     throw new AssertionError("No handler for " + args[0]);
             }
-            return Reply.ok();
         } catch (IllegalArgumentException exception) {
             return Reply.error("invalid_argument", exception.getMessage());
-        } catch (IllegalStateException exception) {
-            return Reply.error("invalid_state", exception.getMessage());
         }
     }
 
@@ -81,7 +72,7 @@ final class GameCommandDispatcher {
         return RunApi.startRun(args[1], runId, ascensionLevel, integer(args[4], "characterId"));
     }
 
-    private static void selectOption(String value) {
+    private static GameCommandResult selectOption(String value) {
         int optionIndex;
         try {
             optionIndex = Integer.parseInt(value);
@@ -92,10 +83,9 @@ final class GameCommandDispatcher {
             } catch (IllegalArgumentException invalidOption) {
                 throw new IllegalArgumentException("selectOption requires an integer index or a rest option name.");
             }
-            RestApi.selectOption(option);
-            return;
+            return RestApi.selectOption(option);
         }
-        EventApi.selectOption(optionIndex);
+        return EventApi.selectOption(optionIndex);
     }
 
     private static String target(String[] args) {
@@ -111,6 +101,10 @@ final class GameCommandDispatcher {
     }
 
     private static Reply reply(CombatApiResult result) {
+        return new Reply(result.isSuccess(), result.getCode(), result.getMessage());
+    }
+
+    private static Reply reply(GameCommandResult result) {
         return new Reply(result.isSuccess(), result.getCode(), result.getMessage());
     }
 }

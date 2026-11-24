@@ -46,6 +46,8 @@ CombatApiResult skipResult = CombatApi.skipCardSelection();
 
 > 游戏内 Java API 必须在渲染线程调用。通过 CLI 调用时，Mod 会将命令交给渲染线程执行。
 
+事件、地图、营火、奖励、继续和商店删牌命令返回 `GameCommandResult`。调用方可用 `isSuccess()` 判断命令是否接受，用 `getCode()` 和 `getMessage()` 读取失败原因。参数无效返回 `invalid_argument`，当前状态不接受操作返回 `invalid_state`。
+
 ### CLI
 
 启动加载了 ReallyFastMode 的游戏后，在终端用同一份 Mod JAR 运行 CLI。命令名和参数顺序与 Java 方法一致。
@@ -74,7 +76,7 @@ java -jar ReallyFastMode.jar proceed
 | `proceed` | 无 |
 | `openCardRemoval` | 无 |
 
-CLI 默认连接本机 `127.0.0.1:18775`。需要更换端口时，给游戏 JVM 和 CLI JVM 设置相同的 `-Dreallyfastmode.cli.port=<port>`。CLI 成功时向标准输出写入 `ok` 和可用的说明，退出码为 `0`。游戏拒绝命令时向标准错误输出错误码和说明，退出码为 `1`。CLI 参数数量、命令名称或连接错误的退出码为 `2`。命令排队成功后，游戏状态变化仍按原版更新时机发生。
+CLI 默认连接本机 `127.0.0.1:18775`。需要更换端口时，给游戏 JVM 和 CLI JVM 设置相同的 `-Dreallyfastmode.cli.port=<port>`。一次 CLI 调用成功时向标准输出写入 `ok` 和可用的说明，退出码为 `0`。游戏拒绝命令时向标准错误输出错误码和说明，退出码为 `1`。CLI 本地参数校验或连接失败的退出码为 `2`。失败响应返回后，游戏里的监听服务继续等待下一条命令。已接受并排队的命令按原版更新时机结算。
 
 ### 战斗内外选牌 API
 
@@ -121,8 +123,8 @@ RestApi.selectOption(VanillaRestOptionCatalog.REST);
 - 入口为 `reallyfastmode.api.RestApi.RestApi.selectOption`，只接收一个 `VanillaRestOptionCatalog` 枚举参数。
 - 支持 `REST`（休息）、`SMITH`（升级）、`DIG`（挖掘）、`LIFT`（举重）、`TOKE`（删牌）、`RECALL`（回忆）。
 - 从当前营火的真实选项列表中精确匹配类型，直接调用原版 `useOption()`，然后设置 `somethingSelected = true`。
-- `null`、`UNKNOWN`、当前不存在或 `usable == false` 的选项直接抛出 `IllegalArgumentException`；不在可操作休息点、已选择、存在其他界面或正在转场时抛出 `IllegalStateException`。校验失败不修改状态。
-- 必须在游戏渲染线程调用。正常返回表示已触发选项；治疗、奖励、升级或删牌选择等后续流程继续由原版处理。
+- `null`、`UNKNOWN`、当前不存在或 `usable == false` 的选项返回 `invalid_argument`。当前没有可操作的营火时返回 `invalid_state`。
+- 必须在游戏渲染线程调用。成功结果表示已触发选项。治疗、奖励、升级或删牌选择等后续流程由原版处理。
 
 ### 地图节点选择 API
 
@@ -132,7 +134,7 @@ MapApi.selectNode(x, y);
 
 - 入口为 `reallyfastmode.api.MapApi.MapApi.selectNode(int x, int y)`。普通节点使用零基坐标，先列 `x`、后行 `y`；唯一允许的负坐标是 Boss 节点 `(-1, 15)`。
 - 必须在游戏渲染线程、地图选择界面且当前房间已完成时调用。目标必须属于 `MapAccess.availableMapNodes()`。普通节点按首层、地图连线或飞靴 / Flight 判定可达性。
-- 坐标无效、节点不存在或不可达直接抛出 `IllegalArgumentException`；当前不可选或已有节点等待进入时抛出 `IllegalStateException`。校验失败不修改状态。
+- 坐标无效、节点不存在或不可达时返回 `invalid_argument`。当前不可选或已有节点等待进入时返回 `invalid_state`。
 - 普通节点保留首次选房标记、飞靴消耗和问号房计数。API 将 `animWaitTimer` 设为负值，由原版 `MapRoomNode.update` 记录路径并启动切房。
 - 完成前三幕各自的地图末排房间，或完成第四幕精英房后，可以用 `selectNode(-1, 15)` 进入 Boss 房。该分支按原版 Boss 图标的规则记录路径并启动转场。
 
@@ -143,8 +145,8 @@ EventApi.selectOption(0); // 选择最下面的选项
 ```
 
 - 入口为 `reallyfastmode.api.EventApi.EventApi.selectOption(int optionIndex)`，从下往上按 `0, 1, 2, ...` 编号，禁用项同样占用编号。
-- 例如从上到下为「选项 A、禁用项、选项 B」，则传 `0` 选择 B、传 `1` 抛异常、传 `2` 选择 A。
-- 负数、越界或禁用项直接抛出 `IllegalArgumentException`；没有可操作事件对话框、存在覆盖界面或已有选择等待处理时抛出 `IllegalStateException`。校验失败不修改状态。
+- 例如从上到下为「选项 A、禁用项、选项 B」，则传 `0` 选择 B、传 `1` 返回 `invalid_argument`、传 `2` 选择 A。
+- 负数、越界或禁用项返回 `invalid_argument`。没有可操作事件对话框、存在覆盖界面或已有选择等待处理时返回 `invalid_state`。
 - 支持 `GenericEventDialog` 和 `RoomEventDialog`，按 `总数 - 1 - optionIndex` 转换到原版列表下标，提交 `selectedOption` / `waitForInput`，由当前事件后续更新处理效果。
 - 必须在游戏渲染线程调用；`EventAccess.options()` 和事件协议仍保持原版从上到下的顺序，调用 API 时需转换编号。
 
@@ -157,12 +159,12 @@ RewardApi.claimBossRelic(0); // 选择 Boss 遗物列表中的第一件
 ```
 
 - `openChest()` 在没有覆盖界面时打开当前房间的普通宝箱或 Boss 宝箱。原版开箱逻辑生成奖励并显示对应界面，领取由后续命令提交。
-- `claimBossRelic(int relicIndex)` 按 `RewardAccess.bossRelicChoices()` 的零基序号提交 Boss 遗物选择。原版处理初始遗物替换、选择记录和界面关闭。索引无效时抛出 `IllegalArgumentException`，当前无法选择或已有选择待处理时抛出 `IllegalStateException`。
+- `claimBossRelic(int relicIndex)` 按 `RewardAccess.bossRelicChoices()` 的零基序号提交 Boss 遗物选择。原版处理初始遗物替换、选择记录和界面关闭。索引无效时返回 `invalid_argument`，当前无法选择或已有选择待处理时返回 `invalid_state`。
 - 入口为 `reallyfastmode.api.RewardApi.RewardApi.claimReward(int rewardIndex)`，按当前奖励界面从上到下以 `0, 1, 2, ...` 编号。
-- 负数或越界直接抛出 `IllegalArgumentException`；奖励界面不可操作或已有一次领取等待处理时抛出 `IllegalStateException`。校验失败不修改状态。
+- 负数或越界返回 `invalid_argument`。奖励界面不可操作、已有一次领取等待处理，或领取药水需要空槽但药水栏已满时返回 `invalid_state`。
 - API 只把对应 `RewardItem.isDone` 设置为 `true`，等同于原版 `RewardItem.update()` 对一次点击的提交结果。下一次 `CombatRewardScreen.update()` 会调用原版 `claimReward()`。
-- 奖励是否移除完全采用原版返回值：药水栏满时原版重置该奖励并显示提示；卡牌奖励打开原版选牌界面；金币、遗物和钥匙也走原版实现。
-- 这些入口必须在游戏渲染线程调用。`claimReward()` 正常返回表示领取尝试已排队，是否领取成功由下一次游戏更新决定。
+- 原版更新决定奖励是否移除或打开选牌界面。已接受的领取由下一次游戏更新结算。
+- 这些入口必须在游戏渲染线程调用。`claimReward()` 返回成功表示领取已排队。
 
 ### 继续操作 API
 
@@ -171,8 +173,8 @@ ProceedApi.proceed();
 ```
 
 - 入口为 `reallyfastmode.api.ProceedApi.ProceedApi.proceed()`，必须在游戏渲染线程调用。当前处于奖励页或已完成的房间，且原版「继续」按钮可操作时接受命令。
-- 正常返回表示操作已排队。下一次按钮更新会执行原版流程，包括打开地图、推进 Boss 宝箱、跨幕或进入胜利房。若房间或界面已切换，本次操作失效。
-- 当前不可继续或已有操作待处理时抛出 `IllegalStateException`。
+- 返回成功表示操作已排队。下一次按钮更新会执行原版流程，包括打开地图、推进 Boss 宝箱、跨幕或进入胜利房。若房间或界面已切换，本次操作失效。
+- 当前不可继续或已有操作待处理时返回 `invalid_state`。
 
 ### 原子状态读取 API
 
@@ -328,6 +330,8 @@ BitWriter out = BitWriter.wrap(packet);
 `wrap` 使用固定容量且不会替换底层数组；写出容量会在该次写入修改数组前抛出异常。目标数组必须是新建或已清零的数组。只有最终长度未知的场景才使用 growable constructor 和 `toByteArray()`。
 
 ### 战斗状态包
+
+每个玩家回合在起手抽牌和回合开始效果结算、恢复操作后发送一份战斗包，包括进入战斗后的首回合。开局或换回合时需要先选牌的，候选出现后先发带 `SELECTION` 的战斗包，选完并结算后再发普通战斗包。
 
 出牌、喝药或提交战斗选牌后，Mod 在 `AbstractDungeon.update()` 结束时检查战斗是否已结束、是否在等待选牌，或是否回到玩家可操作的闲时。普通包包含 `GAME`、`PLAYER`、`COMBAT`、`DECK_CARD`、四个战斗牌堆、`MONSTER`、`POTION` 和当前节点 `MAP`。等待选牌时附加 `SELECTION`，选择后继续等待后续效果结算。清场时退出战斗组包流程。
 

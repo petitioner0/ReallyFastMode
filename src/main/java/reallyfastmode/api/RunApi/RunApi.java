@@ -97,17 +97,16 @@ public final class RunApi {
             return null;
         }
 
-        String normalized = SeedHelper.sterilizeString(seed);
-
-        if (normalized.isEmpty()) {
-            return null;
-        }
-
-        if (normalized.length() > SeedHelper.SEED_DEFAULT_LENGTH) {
+        String trimmedSeed = seed.trim();
+        if (trimmedSeed.isEmpty() || trimmedSeed.length() > SeedHelper.SEED_DEFAULT_LENGTH) {
             return null;
         }
 
         try {
+            String normalized = SeedHelper.sterilizeString(trimmedSeed);
+            if (normalized.isEmpty() || normalized.length() > SeedHelper.SEED_DEFAULT_LENGTH) {
+                return null;
+            }
             return SeedHelper.getLong(normalized);
         } catch (RuntimeException exception) {
             return null;

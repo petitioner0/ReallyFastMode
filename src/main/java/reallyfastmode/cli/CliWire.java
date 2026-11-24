@@ -86,10 +86,6 @@ final class CliWire {
             this.message = message;
         }
 
-        static Reply ok() {
-            return new Reply(true, "ok", "");
-        }
-
         static Reply error(String code, String message) {
             return new Reply(false, code, message);
         }

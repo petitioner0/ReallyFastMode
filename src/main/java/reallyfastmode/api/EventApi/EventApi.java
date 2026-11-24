@@ -8,6 +8,7 @@ import com.megacrit.cardcrawl.events.RoomEventDialog;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.ui.buttons.LargeDialogOptionButton;
 import reallyfastmode.access.EventAccess;
+import reallyfastmode.api.GameCommandResult;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.List;
@@ -20,12 +21,13 @@ public final class EventApi {
     /**
      * Selects an event option, numbered from bottom to top starting at zero.
      * Disabled options still occupy an index. The event consumes the choice
-     * through its normal update loop.
-     *
-     * @throws IllegalArgumentException if the index is out of range or the option is disabled
-     * @throws IllegalStateException if no event dialog is accepting input
+     * through its normal update loop after the command succeeds.
      */
-    public static void selectOption(int optionIndex) {
+    public static GameCommandResult selectOption(int optionIndex) {
+        return GameCommandResult.execute("selectOption", () -> selectEventOption(optionIndex));
+    }
+
+    private static void selectEventOption(int optionIndex) {
         if (optionIndex < 0) {
             throw new IllegalArgumentException("Event option index must be nonnegative.");
         }

@@ -5,14 +5,17 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon.CurrentScreen;
 import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
+import com.megacrit.cardcrawl.potions.PotionSlot;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rewards.RewardItem;
+import com.megacrit.cardcrawl.rewards.RewardItem.RewardType;
 import com.megacrit.cardcrawl.rewards.chests.AbstractChest;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.TreasureRoom;
 import com.megacrit.cardcrawl.rooms.TreasureRoomBoss;
 import com.megacrit.cardcrawl.screens.CombatRewardScreen;
 import com.megacrit.cardcrawl.screens.select.BossRelicSelectScreen;
+import reallyfastmode.api.GameCommandResult;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 
 import java.util.List;
@@ -24,13 +27,13 @@ public final class RewardApi {
 
     /**
      * Attempts to claim one reward, numbered from top to bottom starting at zero.
-     * The next CombatRewardScreen update calls RewardItem.claimReward() and keeps
-     * all vanilla success, failure, removal and follow-up-screen behavior.
-     *
-     * @throws IllegalArgumentException if rewardIndex is outside the current list
-     * @throws IllegalStateException if the reward screen cannot accept a claim
+     * The next CombatRewardScreen update resolves an accepted claim.
      */
-    public static void claimReward(int rewardIndex) {
+    public static GameCommandResult claimReward(int rewardIndex) {
+        return GameCommandResult.execute("claimReward", () -> submitRewardClaim(rewardIndex));
+    }
+
+    private static void submitRewardClaim(int rewardIndex) {
         if (rewardIndex < 0) {
             throw new IllegalArgumentException("Reward index must be nonnegative.");
         }
@@ -38,12 +41,12 @@ public final class RewardApi {
         queueClaim(rewardIndex, screen.rewards);
     }
 
-    /**
-     * Opens the chest in the current treasure room and displays its vanilla rewards.
-     *
-     * @throws IllegalStateException if the current chest cannot be opened
-     */
-    public static void openChest() {
+    /** Opens the chest in the current treasure room and displays its vanilla rewards. */
+    public static GameCommandResult openChest() {
+        return GameCommandResult.execute("openChest", RewardApi::openCurrentChest);
+    }
+
+    private static void openCurrentChest() {
         if (!rewardInteractionReady()
             || CardCrawlGame.isPopupOpen
             || AbstractDungeon.isDungeonBeaten
@@ -74,11 +77,12 @@ public final class RewardApi {
     /**
      * Takes the Boss relic at the zero-based index in the current Boss reward list.
      * Vanilla finalizes the choice and closes the screen on its next update.
-     *
-     * @throws IllegalArgumentException if relicIndex is outside the current list
-     * @throws IllegalStateException if the Boss reward screen cannot accept a choice
      */
-    public static void claimBossRelic(int relicIndex) {
+    public static GameCommandResult claimBossRelic(int relicIndex) {
+        return GameCommandResult.execute("claimBossRelic", () -> submitBossRelicChoice(relicIndex));
+    }
+
+    private static void submitBossRelicChoice(int relicIndex) {
         if (relicIndex < 0) {
             throw new IllegalArgumentException("Boss relic index must be nonnegative.");
         }
@@ -163,6 +167,11 @@ public final class RewardApi {
 
         // CombatRewardScreen.positionRewards places list index 0 at the top.
         RewardItem selected = rewards.get(rewardIndex);
+        if (selected.type == RewardType.POTION && !AbstractDungeon.player.hasRelic("Sozu")
+            && AbstractDungeon.player.potions.stream().limit(AbstractDungeon.player.potionSlots)
+                .noneMatch(PotionSlot.class::isInstance)) {
+            throw new IllegalStateException("No empty potion slot is available.");
+        }
 
         // Consume pending mouse/controller input so this update attempts only the
         // requested reward. RewardItem.update uses isDone as its click result.

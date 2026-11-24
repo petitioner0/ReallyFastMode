@@ -14,11 +14,13 @@ import reallyfastmode.access.CombatAccess;
 import reallyfastmode.protocol.io.StatePacketSender;
 import reallyfastmode.protocol.write.CombatPacketPacker;
 
-/** Publishes battle snapshots when a combat command reaches the next input boundary. */
+/** Publishes battle snapshots at player turn start and after combat commands settle. */
 public final class CombatPacketPatches {
     private static final Logger LOGGER = LogManager.getLogger(CombatPacketPatches.class.getName());
 
     private static AbstractRoom trackedRoom;
+    private static int publishedTurn = -1;
+    private static boolean settlementPending;
     private static CurrentScreen publishedSelection;
 
     private CombatPacketPatches() {
@@ -26,7 +28,8 @@ public final class CombatPacketPatches {
 
     /** Records a successful play, potion use or combat card selection on the render thread. */
     public static void awaitSettlement() {
-        trackedRoom = AbstractDungeon.getCurrRoom();
+        trackRoom(AbstractDungeon.getCurrRoom());
+        settlementPending = true;
         publishedSelection = null;
     }
 
@@ -34,19 +37,19 @@ public final class CombatPacketPatches {
     public static class CaptureAfterUpdatePatch {
         @SpirePostfixPatch
         public static void capture() {
-            if (trackedRoom == null) {
-                return;
-            }
             AbstractRoom room = AbstractDungeon.currMapNode == null ? null : AbstractDungeon.getCurrRoom();
             AbstractPlayer player = AbstractDungeon.player;
-            if (room != trackedRoom || room.phase != AbstractRoom.RoomPhase.COMBAT
+            if (room == null || room.phase != AbstractRoom.RoomPhase.COMBAT
                 || room.monsters == null || room.isBattleEnding()
                 || player == null || player.isDead || player.isDying || player.isEscaping) {
-                trackedRoom = null;
-                publishedSelection = null;
+                trackRoom(null);
                 return;
             }
-            if (AbstractDungeon.isFadingIn || AbstractDungeon.isFadingOut
+            trackRoom(room);
+            int turn = CombatAccess.turn();
+            boolean turnStartPending = turn != publishedTurn;
+            if ((!turnStartPending && !settlementPending)
+                || AbstractDungeon.isFadingIn || AbstractDungeon.isFadingOut
                 || CardCrawlGame.isPopupOpen || PeekButton.isPeeking) {
                 return;
             }
@@ -63,12 +66,29 @@ public final class CombatPacketPatches {
 
             publishedSelection = null;
             if (!AbstractDungeon.isScreenUp && screen == CurrentScreen.NONE
+                && (!turnStartPending || isTurnStartReady())
                 && CombatAccess.isPlayerTurnIdle() && !AbstractDungeon.actionManager.usingCard
                 && AbstractDungeon.actionManager.monsterQueue.isEmpty() && !StatePacketEffects.hasPending()) {
-                trackedRoom = null;
+                publishedTurn = turn;
+                settlementPending = false;
                 publish(false);
             }
         }
+    }
+
+    private static void trackRoom(AbstractRoom room) {
+        if (room != trackedRoom) {
+            trackedRoom = room;
+            publishedTurn = -1;
+            settlementPending = false;
+            publishedSelection = null;
+        }
+    }
+
+    private static boolean isTurnStartReady() {
+        // The first turn number is set before the opening draw and the energy-gain callbacks.
+        return !AbstractDungeon.turnPhaseEffectActive && AbstractDungeon.overlayMenu != null
+            && AbstractDungeon.overlayMenu.endTurnButton != null && AbstractDungeon.overlayMenu.endTurnButton.enabled;
     }
 
     private static void publish(boolean awaitingSelection) {

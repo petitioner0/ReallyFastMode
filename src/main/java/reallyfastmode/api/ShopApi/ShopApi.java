@@ -6,6 +6,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.controller.CInputActionSet;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.shop.ShopScreen;
+import reallyfastmode.api.GameCommandResult;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 
 /** Semantic shop commands. Call on the game render thread. */
@@ -14,7 +15,11 @@ public final class ShopApi {
     }
 
     /** Opens the paid card removal grid. The shop charges gold when a card is selected. */
-    public static void openCardRemoval() {
+    public static GameCommandResult openCardRemoval() {
+        return GameCommandResult.execute("openCardRemoval", ShopApi::openRemovalGrid);
+    }
+
+    private static void openRemovalGrid() {
         ShopScreen shop = AbstractDungeon.shopScreen;
         if (CardCrawlGame.mode != CardCrawlGame.GameMode.GAMEPLAY
             || AbstractDungeon.screen != AbstractDungeon.CurrentScreen.SHOP

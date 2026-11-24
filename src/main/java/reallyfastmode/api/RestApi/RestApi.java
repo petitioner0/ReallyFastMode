@@ -6,6 +6,7 @@ import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.CampfireUI;
 import com.megacrit.cardcrawl.rooms.RestRoom;
 import com.megacrit.cardcrawl.ui.campfire.AbstractCampfireOption;
+import reallyfastmode.api.GameCommandResult;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 import reallyfastmode.protocol.VanillaCatalog.VanillaRestOptionCatalog;
 
@@ -20,11 +21,12 @@ public final class RestApi {
      * Triggers the current campfire option through its vanilla useOption method.
      * Success means the option was triggered; its effects and any subsequent
      * card selection continue through the normal game update loop.
-     *
-     * @throws IllegalArgumentException if option is null, unknown, absent or disabled
-     * @throws IllegalStateException if the current campfire is not accepting input
      */
-    public static void selectOption(VanillaRestOptionCatalog option) {
+    public static GameCommandResult selectOption(VanillaRestOptionCatalog option) {
+        return GameCommandResult.execute("selectOption", () -> selectCampfireOption(option));
+    }
+
+    private static void selectCampfireOption(VanillaRestOptionCatalog option) {
         if (option == null || option == VanillaRestOptionCatalog.UNKNOWN) {
             throw new IllegalArgumentException("A concrete vanilla rest option is required.");
         }

@@ -9,6 +9,7 @@ import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
+import reallyfastmode.api.GameCommandResult;
 import reallyfastmode.patches.access.PrivateFieldAccess;
 
 /** Submits a vanilla Proceed action. Call on the game render thread. */
@@ -21,10 +22,12 @@ public final class ProceedApi {
     /**
      * Requests one Proceed action for the current room and screen. Vanilla
      * handles the request on the next button update if that context is still active.
-     *
-     * @throws IllegalStateException if Proceed is unavailable or already queued
      */
-    public static void proceed() {
+    public static GameCommandResult proceed() {
+        return GameCommandResult.execute("proceed", ProceedApi::queueProceed);
+    }
+
+    private static void queueProceed() {
         if (!canProceed()) {
             throw new IllegalStateException("The current screen is not accepting Proceed.");
         }
