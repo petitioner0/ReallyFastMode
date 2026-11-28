@@ -19,10 +19,7 @@ public final class ProceedApi {
     private ProceedApi() {
     }
 
-    /**
-     * Requests one Proceed action for the current room and screen. Vanilla
-     * handles the request on the next button update if that context is still active.
-     */
+    /** Requests one Proceed action, including closing the merchant screen if it is open. */
     public static GameCommandResult proceed() {
         return GameCommandResult.execute("proceed", ProceedApi::queueProceed);
     }
@@ -35,7 +32,8 @@ public final class ProceedApi {
         if (pending != null && pending.matches(button)) {
             throw new IllegalStateException("A Proceed action is already pending.");
         }
-        if (!PrivateFieldAccess.proceedButtonAcceptsClick(button)) {
+        if (AbstractDungeon.screen != CurrentScreen.SHOP
+            && !PrivateFieldAccess.proceedButtonAcceptsClick(button)) {
             throw new IllegalStateException("The Proceed button is hidden or already clicked.");
         }
         pending = new ProceedRequest(button);
@@ -59,9 +57,14 @@ public final class ProceedApi {
         if (AbstractDungeon.screen == CurrentScreen.COMBAT_REWARD) {
             return AbstractDungeon.isScreenUp && AbstractDungeon.combatRewardScreen != null;
         }
-        return AbstractDungeon.screen == CurrentScreen.NONE
-            && !AbstractDungeon.isScreenUp
-            && AbstractDungeon.currMapNode.room.phase == AbstractRoom.RoomPhase.COMPLETE;
+        if (AbstractDungeon.currMapNode.room.phase != AbstractRoom.RoomPhase.COMPLETE) {
+            return false;
+        }
+        if (AbstractDungeon.screen == CurrentScreen.SHOP) {
+            return AbstractDungeon.isScreenUp && (AbstractDungeon.previousScreen == null
+                || AbstractDungeon.previousScreen == CurrentScreen.SHOP);
+        }
+        return AbstractDungeon.screen == CurrentScreen.NONE && !AbstractDungeon.isScreenUp;
     }
 
     private static final class ProceedRequest {
@@ -92,8 +95,15 @@ public final class ProceedApi {
             }
             pending = null;
             // A reward claim or another screen change can precede this update.
-            if (request.matches(__instance) && canProceed()
-                && PrivateFieldAccess.proceedButtonAcceptsClick(__instance)) {
+            if (!request.matches(__instance) || !canProceed()) {
+                return;
+            }
+            if (request.screen == CurrentScreen.SHOP) {
+                AbstractDungeon.screenSwap = false;
+                AbstractDungeon.closeCurrentScreen();
+                __instance.show();
+            }
+            if (PrivateFieldAccess.proceedButtonAcceptsClick(__instance)) {
                 ___hb.clicked = true;
             }
         }
